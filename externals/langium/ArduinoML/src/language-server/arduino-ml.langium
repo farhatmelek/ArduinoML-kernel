@@ -35,7 +35,10 @@ Action :
 	actuator=[Actuator:ID] '<=' value=Signal;
 
 Transition :
-	sensor=[Sensor:ID] 'is' value=Signal '=>' next=[State:ID];
+    conditions+=Condition ('AND' conditions+=Condition)* '=>' next=[State:ID];
+
+Condition :
+    sensor=[Sensor:ID] 'is' value=Signal;
 
 Signal:
     value=(HIGH | LOW);
