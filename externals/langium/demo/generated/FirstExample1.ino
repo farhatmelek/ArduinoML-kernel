@@ -27,30 +27,28 @@ long button2LastDebounceTime = 0;
 
 				case off:
 					digitalWrite(3,LOW);
-			if( 
-				button1BounceGuard = millis() - button1LastDebounceTime > debounce;
-				if( digitalRead(8) == HIGH && button1BounceGuard)
-			 && 
-				button2BounceGuard = millis() - button2LastDebounceTime > debounce;
-				if( digitalRead(9) == HIGH && button2BounceGuard)
-			 ) {
-				alarmLastDebounceTime = millis();
-				currentState = alarm;
-			}
+					if (
+						(millis() - button1LastDebounceTime > debounce &&
+						digitalRead(8) == HIGH)
+						&& 
+						(millis() - button2LastDebounceTime > debounce &&
+						digitalRead(9) == HIGH)
+		) {
+						currentState = alarm;
+					}
 		
 				break;
 				case alarm:
 					digitalWrite(3,HIGH);
-			if( 
-				button1BounceGuard = millis() - button1LastDebounceTime > debounce;
-				if( digitalRead(8) == LOW && button1BounceGuard)
-			 && 
-				button2BounceGuard = millis() - button2LastDebounceTime > debounce;
-				if( digitalRead(9) == LOW && button2BounceGuard)
-			 ) {
-				offLastDebounceTime = millis();
-				currentState = off;
-			}
+					if (
+						(millis() - button1LastDebounceTime > debounce &&
+						digitalRead(8) == LOW)
+						|| 
+						(millis() - button2LastDebounceTime > debounce &&
+						digitalRead(9) == LOW)
+		) {
+						currentState = off;
+					}
 		
 				break;
 		}

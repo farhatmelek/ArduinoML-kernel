@@ -67,6 +67,20 @@ export function isCondition(item: unknown): item is Condition {
     return reflection.isInstance(item, Condition);
 }
 
+export interface LogicalOperator extends AstNode {
+    readonly $container: Transition;
+    readonly $type: 'LogicalOperator';
+    AND?: 'AND'
+    OR?: 'OR'
+    XOR?: 'XOR'
+}
+
+export const LogicalOperator = 'LogicalOperator';
+
+export function isLogicalOperator(item: unknown): item is LogicalOperator {
+    return reflection.isInstance(item, LogicalOperator);
+}
+
 export interface Sensor extends AstNode {
     readonly $container: App;
     readonly $type: 'Sensor';
@@ -111,6 +125,7 @@ export interface Transition extends AstNode {
     readonly $type: 'Transition';
     conditions: Array<Condition>
     next: Reference<State>
+    operator: Array<LogicalOperator>
 }
 
 export const Transition = 'Transition';
@@ -125,6 +140,7 @@ export interface ArduinoMlAstType {
     App: App
     Brick: Brick
     Condition: Condition
+    LogicalOperator: LogicalOperator
     Sensor: Sensor
     Signal: Signal
     State: State
@@ -134,7 +150,7 @@ export interface ArduinoMlAstType {
 export class ArduinoMlAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'Sensor', 'Signal', 'State', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'Sensor', 'Signal', 'State', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -191,7 +207,8 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
                 return {
                     name: 'Transition',
                     mandatory: [
-                        { name: 'conditions', type: 'array' }
+                        { name: 'conditions', type: 'array' },
+                        { name: 'operator', type: 'array' }
                     ]
                 };
             }

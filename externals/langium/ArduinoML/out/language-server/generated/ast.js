@@ -4,7 +4,7 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isState = exports.State = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isCondition = exports.Condition = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isBrick = exports.Brick = void 0;
+exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isState = exports.State = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isLogicalOperator = exports.LogicalOperator = exports.isCondition = exports.Condition = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isBrick = exports.Brick = void 0;
 /* eslint-disable */
 const langium_1 = require("langium");
 exports.Brick = 'Brick';
@@ -32,6 +32,11 @@ function isCondition(item) {
     return exports.reflection.isInstance(item, exports.Condition);
 }
 exports.isCondition = isCondition;
+exports.LogicalOperator = 'LogicalOperator';
+function isLogicalOperator(item) {
+    return exports.reflection.isInstance(item, exports.LogicalOperator);
+}
+exports.isLogicalOperator = isLogicalOperator;
 exports.Sensor = 'Sensor';
 function isSensor(item) {
     return exports.reflection.isInstance(item, exports.Sensor);
@@ -54,7 +59,7 @@ function isTransition(item) {
 exports.isTransition = isTransition;
 class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
     getAllTypes() {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'Sensor', 'Signal', 'State', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'Sensor', 'Signal', 'State', 'Transition'];
     }
     computeIsSubtype(subtype, supertype) {
         switch (subtype) {
@@ -108,7 +113,8 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
                 return {
                     name: 'Transition',
                     mandatory: [
-                        { name: 'conditions', type: 'array' }
+                        { name: 'conditions', type: 'array' },
+                        { name: 'operator', type: 'array' }
                     ]
                 };
             }
