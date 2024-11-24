@@ -88,7 +88,6 @@ function compileAction(action, fileNode) {
 }
 function compileTransition(transition, fileNode) {
     var _a, _b;
-    console.log(transition);
     let combinedCondition = transition.conditions.map(condition => {
         var _a, _b, _c, _d;
         return `
