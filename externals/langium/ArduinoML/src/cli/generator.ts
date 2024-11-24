@@ -101,7 +101,6 @@ long `+brick.name+`LastDebounceTime = 0;
 	
 
 	function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {
-		console.log(transition);
 		
 		let combinedCondition = transition.conditions.map(condition => {
 			return `

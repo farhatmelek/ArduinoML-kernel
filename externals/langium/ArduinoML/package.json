@@ -41,7 +41,8 @@
         "lint": "eslint src --ext ts",
         "langium:generate": "langium generate",
         "langium:watch": "langium generate --watch",
-        "cli": "node ./bin/cli"
+        "cli:info": "node ./bin/cli",
+        "cli": "node ./bin/cli generate --destination ../demo/generated"
     },
     "dependencies": {
         "chevrotain": "^10.4.1",
