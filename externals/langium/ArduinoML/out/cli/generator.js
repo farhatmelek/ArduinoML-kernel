@@ -87,13 +87,20 @@ function compileAction(action, fileNode) {
 					digitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
 }
 function compileTransition(transition, fileNode) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b;
+    console.log(transition);
+    let combinedCondition = transition.conditions.map(condition => {
+        var _a, _b, _c, _d;
+        return `
+				` + ((_a = condition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name) + `BounceGuard = millis() - ` + ((_b = condition.sensor.ref) === null || _b === void 0 ? void 0 : _b.name) + `LastDebounceTime > debounce;
+				if( digitalRead(` + ((_c = condition.sensor.ref) === null || _c === void 0 ? void 0 : _c.inputPin) + `) == ` + condition.value.value + ` && ` + ((_d = condition.sensor.ref) === null || _d === void 0 ? void 0 : _d.name) + `BounceGuard)
+			`;
+    }).join(' && ');
     fileNode.append(`
-		 			` + ((_a = transition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name) + `BounceGuard = millis() - ` + ((_b = transition.sensor.ref) === null || _b === void 0 ? void 0 : _b.name) + `LastDebounceTime > debounce;
-					if( digitalRead(` + ((_c = transition.sensor.ref) === null || _c === void 0 ? void 0 : _c.inputPin) + `) == ` + transition.value.value + ` && ` + ((_d = transition.sensor.ref) === null || _d === void 0 ? void 0 : _d.name) + `BounceGuard) {
-						` + ((_e = transition.sensor.ref) === null || _e === void 0 ? void 0 : _e.name) + `LastDebounceTime = millis();
-						currentState = ` + ((_f = transition.next.ref) === null || _f === void 0 ? void 0 : _f.name) + `;
-					}
+			if( ${combinedCondition} ) {
+				${(_a = transition.next.ref) === null || _a === void 0 ? void 0 : _a.name}LastDebounceTime = millis();
+				currentState = ${(_b = transition.next.ref) === null || _b === void 0 ? void 0 : _b.name};
+			}
 		`);
 }
 //# sourceMappingURL=generator.js.map

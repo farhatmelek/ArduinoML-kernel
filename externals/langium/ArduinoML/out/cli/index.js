@@ -37,7 +37,7 @@ function default_1() {
         .command('generate')
         .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
         .option('-d, --destination <dir>', 'destination directory of generating')
-        .description('generates JavaScript code that prints "Hello, {name}!" for each greeting in a source file')
+        .description('generates .ino code from ArduinoML model')
         .action(exports.generateAction);
     program.parse(process.argv);
 }

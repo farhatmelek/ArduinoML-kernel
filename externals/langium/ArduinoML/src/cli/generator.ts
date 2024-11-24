@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { CompositeGeneratorNode, NL, toString } from 'langium';
 import path from 'path';
-import { Action, Actuator, App, Sensor, State, Transition } from '../language-server/generated/ast';
+import { Action, Actuator, App, Sensor, State, Transition} from '../language-server/generated/ast';
 import { extractDestinationAndName } from './cli-util';
 
 export function generateInoFile(app: App, filePath: string, destination: string | undefined): string {
@@ -98,13 +98,24 @@ long `+brick.name+`LastDebounceTime = 0;
 					digitalWrite(`+action.actuator.ref?.outputPin+`,`+action.value.value+`);`)
 	}
 
-	function compileTransition(transition: Transition, fileNode:CompositeGeneratorNode) {
+	
+
+	function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {
+		console.log(transition);
+		
+		let combinedCondition = transition.conditions.map(condition => {
+			return `
+				`+condition.sensor.ref?.name+`BounceGuard = millis() - `+condition.sensor.ref?.name+`LastDebounceTime > debounce;
+				if( digitalRead(`+condition.sensor.ref?.inputPin+`) == `+condition.value.value+` && `+condition.sensor.ref?.name+`BounceGuard)
+			`;
+		}).join(' && ');  
+		
 		fileNode.append(`
-		 			`+transition.sensor.ref?.name+`BounceGuard = millis() - `+transition.sensor.ref?.name+`LastDebounceTime > debounce;
-					if( digitalRead(`+transition.sensor.ref?.inputPin+`) == `+transition.value.value+` && `+transition.sensor.ref?.name+`BounceGuard) {
-						`+transition.sensor.ref?.name+`LastDebounceTime = millis();
-						currentState = `+transition.next.ref?.name+`;
-					}
-		`)
+			if( ${combinedCondition} ) {
+				${transition.next.ref?.name}LastDebounceTime = millis();
+				currentState = ${transition.next.ref?.name};
+			}
+		`);
 	}
+	
 
