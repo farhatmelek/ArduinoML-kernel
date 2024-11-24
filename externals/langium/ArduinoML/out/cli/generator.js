@@ -91,14 +91,11 @@ function compileTransition(transition, fileNode) {
     if (transition.conditions.length === 0) {
         throw new Error("Transition must have at least one condition.");
     }
-    // Générer les conditions combinées
     const conditionStrings = transition.conditions.map((condition) => generateCondition(condition, fileNode));
-    // Initialiser la chaîne de conditions combinées
     let combinedConditions = conditionStrings[0];
-    // Traiter les opérateurs logiques pour combiner les conditions
     for (let i = 1; i < conditionStrings.length; i++) {
-        const operator = transition.operator[i - 1]; // L'opérateur entre les conditions (AND, OR, etc.)
-        const operatorString = getLogicalOperatorString(operator); // Convertir l'opérateur en chaîne de caractères
+        const operator = transition.operator[i - 1];
+        const operatorString = getLogicalOperatorString(operator);
         combinedConditions += `\t\t\t\t${operatorString} ${conditionStrings[i]}`;
     }
     fileNode.append(`
