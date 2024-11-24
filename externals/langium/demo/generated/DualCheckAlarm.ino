@@ -33,7 +33,7 @@ long button2LastDebounceTime = 0;
 						&& 
 						(millis() - button2LastDebounceTime > debounce &&
 						digitalRead(9) == HIGH)
-		) {
+					) {
 						currentState = alarm;
 					}
 		
@@ -46,7 +46,7 @@ long button2LastDebounceTime = 0;
 						|| 
 						(millis() - button2LastDebounceTime > debounce &&
 						digitalRead(9) == LOW)
-		) {
+					) {
 						currentState = off;
 					}
 		
