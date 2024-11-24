@@ -3,5 +3,8 @@ embeddeds/haskell/dist
 # Python
 *.py[cod]
 
+# Ignorer tous les dossiers node_modules dans n'importe quel sous-répertoire
+**/node_modules/
+
 
 
