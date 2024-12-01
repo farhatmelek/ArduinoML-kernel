@@ -16,7 +16,7 @@ public class SignalTransition extends Transition {
         this.condition = condition;
     }
 
-    
+
 
     @Override
     public void accept(Visitor visitor) {

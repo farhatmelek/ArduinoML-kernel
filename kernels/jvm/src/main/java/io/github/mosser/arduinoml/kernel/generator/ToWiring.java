@@ -135,6 +135,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 			String sensorName = (condition instanceof SimpleCondition)
 					? ((SimpleCondition) condition).getSensor().getName()
 					: "compoundCondition";
+			//condition.accept(this);
 
 			writeTransitionWithDebounce(conditionCode, sensorName, transition.getNext().getName());
 		}
@@ -176,18 +177,18 @@ public class ToWiring extends Visitor<StringBuffer> {
 
 	@Override
 	public void visit(Condition condition) {
-		if (condition instanceof SimpleCondition) {
+		/*if (condition instanceof SimpleCondition) {
 			SimpleCondition simpleCondition = (SimpleCondition) condition;
 			String conditionCode = simpleCondition.toArduinoCode();
 			String sensorName = simpleCondition.getSensor().getName();
-			writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
+			//writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
 
 		} else if (condition instanceof MultipleCondition) {
 			MultipleCondition multipleCondition = (MultipleCondition) condition;
 			String conditionCode = multipleCondition.toArduinoCode();
 			String sensorName = "compoundCondition";
-			writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
-		}
+			//writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
+		}*/
 	}
 
 }
