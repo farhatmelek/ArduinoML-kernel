@@ -106,7 +106,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 
 	}
 
-	@Override
+	/*@Override
 	public void visit(SignalTransition transition) {
 		if(context.get("pass") == PASS.ONE) {
 			return;
@@ -122,7 +122,32 @@ public class ToWiring extends Visitor<StringBuffer> {
 			w("\t\t\t}\n");
 			return;
 		}
+	}*/
+	@Override
+	public void visit(SignalTransition transition) {
+		if (context.get("pass") == PASS.ONE) {
+			return;
+		}
+		if (context.get("pass") == PASS.TWO) {
+			Condition condition = transition.getCondition();
+			String conditionCode = condition.toArduinoCode();
+
+			String sensorName = (condition instanceof SimpleCondition)
+					? ((SimpleCondition) condition).getSensor().getName()
+					: "compoundCondition";
+
+			writeTransitionWithDebounce(conditionCode, sensorName, transition.getNext().getName());
+		}
 	}
+
+	private void writeTransitionWithDebounce(String conditionCode, String sensorName, String nextState) {
+		w(String.format("\t\t\t%sBounceGuard = millis() - %sLastDebounceTime > debounce;\n", sensorName, sensorName));
+		w(String.format("\t\t\tif (%s && %sBounceGuard) {\n", conditionCode, sensorName));
+		w(String.format("\t\t\t\t%sLastDebounceTime = millis();\n", sensorName));
+		w("\t\t\t\tcurrentState = " + nextState + ";\n");
+		w("\t\t\t}\n");
+	}
+
 
 	@Override
 	public void visit(TimeTransition transition) {
@@ -146,6 +171,22 @@ public class ToWiring extends Visitor<StringBuffer> {
 		if(context.get("pass") == PASS.TWO) {
 			w(String.format("\t\t\tdigitalWrite(%d,%s);\n",action.getActuator().getPin(),action.getValue()));
 			return;
+		}
+	}
+
+	@Override
+	public void visit(Condition condition) {
+		if (condition instanceof SimpleCondition) {
+			SimpleCondition simpleCondition = (SimpleCondition) condition;
+			String conditionCode = simpleCondition.toArduinoCode();
+			String sensorName = simpleCondition.getSensor().getName();
+			writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
+
+		} else if (condition instanceof MultipleCondition) {
+			MultipleCondition multipleCondition = (MultipleCondition) condition;
+			String conditionCode = multipleCondition.toArduinoCode();
+			String sensorName = "compoundCondition";
+			writeTransitionWithDebounce(conditionCode, sensorName, "nextState");
 		}
 	}
 

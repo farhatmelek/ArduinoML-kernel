@@ -5,29 +5,25 @@ import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
 import io.github.mosser.arduinoml.kernel.structural.Sensor;
 
 public class SignalTransition extends Transition {
-
+    private Condition condition;
     private Sensor sensor;
     private SIGNAL value;
 
-
-    public Sensor getSensor() {
-        return sensor;
+    public Condition getCondition() {
+        return condition;
+    }
+    public void setCondition(Condition condition) {
+        this.condition = condition;
     }
 
-    public void setSensor(Sensor sensor) {
-        this.sensor = sensor;
-    }
-
-    public SIGNAL getValue() {
-        return value;
-    }
-
-    public void setValue(SIGNAL value) {
-        this.value = value;
-    }
+    
 
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
+        if (condition != null) {
+            condition.accept(visitor);
+        }
     }
+
 }

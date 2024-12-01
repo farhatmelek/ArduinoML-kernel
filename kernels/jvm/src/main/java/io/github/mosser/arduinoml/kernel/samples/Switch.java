@@ -17,6 +17,10 @@ public class Switch {
 		button.setName("button");
 		button.setPin(9);
 
+		Sensor secondButton = new Sensor();
+		secondButton.setName("secondButton");
+		secondButton.setPin(10);
+
 		Actuator led = new Actuator();
 		led.setName("LED");
 		led.setPin(12);
@@ -41,16 +45,27 @@ public class Switch {
 		on.setActions(Arrays.asList(switchTheLightOn));
 		off.setActions(Arrays.asList(switchTheLightOff));
 
-		// Creating transitions
+		// Creating conditions
+		SimpleCondition buttonPressed = new SimpleCondition();
+		buttonPressed.setSensor(button);
+		buttonPressed.setValue(SIGNAL.HIGH);
+
+		SimpleCondition secondButtonPressed = new SimpleCondition();
+		secondButtonPressed.setSensor(secondButton);
+		secondButtonPressed.setValue(SIGNAL.HIGH);
+
+		MultipleCondition multipleCondition = new MultipleCondition(
+				Arrays.asList(buttonPressed, secondButtonPressed),
+				LogicalOperator.AND
+		);
+
 		SignalTransition on2off = new SignalTransition();
 		on2off.setNext(off);
-		on2off.setSensor(button);
-		on2off.setValue(SIGNAL.HIGH);
+		on2off.setCondition(multipleCondition);
 
 		SignalTransition off2on = new SignalTransition();
 		off2on.setNext(on);
-		off2on.setSensor(button);
-		off2on.setValue(SIGNAL.HIGH);
+		off2on.setCondition(multipleCondition);
 
 		// Binding transitions to states
 		on.setTransition(on2off);
@@ -59,7 +74,7 @@ public class Switch {
 		// Building the App
 		App theSwitch = new App();
 		theSwitch.setName("Switch!");
-		theSwitch.setBricks(Arrays.asList(button, led ));
+		theSwitch.setBricks(Arrays.asList(button, secondButton, led));
 		theSwitch.setStates(Arrays.asList(on, off));
 		theSwitch.setInitial(off);
 
@@ -70,5 +85,4 @@ public class Switch {
 		// Printing the generated code on the console
 		System.out.println(codeGenerator.getResult());
 	}
-
 }
