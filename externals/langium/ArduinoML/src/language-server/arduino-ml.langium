@@ -34,12 +34,17 @@ Action :
     actuator=[Actuator:ID] '<=' value=Signal;
 
 Transition :
-    conditions+=Condition
-    (operator+=LogicalOperator conditions+=Condition)* 
-    '=>' next=[State:ID];
+    condition=Condition '=>' next=[State:ID];
 
-Condition :
+Condition:
+    SimpleCondition | MultipleCondition;
+
+SimpleCondition:
     sensor=[Sensor:ID] 'is' value=Signal;
+
+MultipleCondition:
+    '(' conditions+=Condition
+    (operator=LogicalOperator conditions+=Condition)+ ')';
 
 Signal:
     value=(HIGH | LOW);
