@@ -74,18 +74,56 @@ struct arduino_transition {
   int lineno;
   char *var_name;
   int sig_value;
+  Condition *condition;
   char *newstate;
+  Temp_Condition *temp_condition;
+  struct arduino_transition *next;
 };
 
 /// Make a new transition (when `var` is `signal` goto `newstate`
-Transition *make_transition(char *var, int signal, char *newstate) {
+Transition *make_transition_simple(char *var, int signal, char *newstate) {
   Transition *p = must_malloc(sizeof(Transition));
 
   p->lineno    = yylineno;
   p->var_name  = var;
   p->sig_value = signal;
   p->newstate  = newstate;
+
   return p;
+}
+
+Transition *make_transition(Condition *condition, char *newstate) {
+  Transition *p = must_malloc(sizeof(Transition));
+
+  p->lineno    = yylineno;
+  p->var_name  = condition->var_name;
+  p->sig_value = condition->signal_value;
+  p->newstate  = newstate;
+  p->condition = condition;
+  p->temp_condition = NULL;
+  return p;
+}
+
+Transition *make_temp_transition(Temp_Condition *temp_Condition , char *newstate) {
+  Transition *p = must_malloc(sizeof(Transition));
+
+  p->lineno    = yylineno;
+  p->var_name  = temp_Condition-> condition1 ->var_name;
+  p->sig_value = temp_Condition-> condition1 ->signal_value;
+  p->newstate  = newstate;
+  p->condition = temp_Condition->condition1;
+  p->temp_condition =  temp_Condition;
+  return p;
+}
+
+Transition *add_transition(Transition *list, Transition *t) {
+  if (list) {
+    Transition *tmp = list;
+    while (tmp->next) tmp = tmp->next;
+    tmp->next = t;
+    return list;
+  }
+  return t;
 }
 
 
@@ -200,6 +238,46 @@ static void check_states(Brick *brick_list, State *state_list) {
 }
 
 
+// Make a new condition that combines two conditions using the given operator
+Condition *make_condition(Condition *condition1, char *operator, Condition *condition2) {
+    Condition *p = must_malloc(sizeof(Condition));
+    
+    p->lineno    = yylineno;
+    p->var_name = condition1->var_name;
+    p->signal_value = condition1->signal_value;
+    p->sig_value = 0;
+    p->condition1 = condition1;
+    p->condition2 = condition2;
+    p->operator = operator;
+    return p;
+}
+
+// Make a new condition based on a single variable and signal value
+Condition *make_simple_condition(char *var_name, int signal_value) {
+    Condition *p = must_malloc(sizeof(Condition));
+
+    p->lineno    = yylineno;
+    p->var_name = var_name;
+    p->signal_value = signal_value;
+    p->condition1 = NULL;
+    p->condition2 = NULL;
+    p->operator = NULL;
+    return p;
+}
+
+
+Temp_Condition *make_temp_condition(Condition *condition1, int duration) {
+    Temp_Condition *p = must_malloc(sizeof(Temp_Condition));
+
+    p->lineno    = yylineno;
+    p->var_name = condition1->var_name;
+    p->signal_value = condition1->signal_value;
+    p->sig_value = 0;
+    p->condition1 = condition1;
+    p->duration = duration;
+    return p;
+}
+
 // ======================================================================
 //                      C O D E   P R O D U C T I O N
 // ======================================================================
@@ -209,6 +287,30 @@ static void emit_header(char *appname) {
          "long debounce = 200;\n\n",
          appname);
 }
+
+static void emit_condition(Condition *condition) {
+    if (condition->condition1 == NULL && condition->condition2 == NULL) {
+        printf("digitalRead(%s) == %s", condition->var_name , condition->signal_value ? "HIGH": "LOW");
+    }  else {
+        printf("((");
+        emit_condition(condition->condition1);
+        printf(")");
+        char *op;
+        if (strcmp(condition->operator, "and") == 0) {
+            op = "&&";
+        } else if (strcmp(condition->operator, "or") == 0) {
+            op = "||";
+        } else if (strcmp(condition->operator, "xor") == 0) {
+            op = "^";
+        } else {
+            op = condition->operator;
+        }
+        printf(" %s (", op);
+        emit_condition(condition->condition2);
+        printf("))");
+    }
+}
+
 
 static void emit_bricks(Brick *lst) {
   // Produce variables
@@ -229,13 +331,29 @@ static void emit_actions(Action *list) {
     printf("  digitalWrite(%s, %s);\n", p->var_name, p->sig_value ? "HIGH": "LOW");
 }
 
-static void emit_transition(char *current_state, Transition *transition) {
+
+static void emit_delay_action(State * state) {
+  for (Action *p = state->actions; p; p = p->next){
+    printf("  digitalWrite(%s, %s);\n", p->var_name, p->sig_value ? "HIGH": "LOW");
+    printf("  delay(%d);\n", state->transition->temp_condition->duration);
+  }
+}
+
+static void emit_transitions(char *current_state, Transition *list) {
   printf("  boolean guard =  millis() - time > debounce;\n");
-  printf("  if (digitalRead(%s) == %s && guard) {\n", transition->var_name,
-         transition->sig_value? "HIGH": "LOW");
-  printf("    time = millis();\n");
-  printf("    state_%s();\n", transition->newstate);
-  printf("  } else {\n");
+    printf("  ");
+  for (Transition *p = list; p; p = p->next) {
+    printf("if ( ");
+    if (p->condition != NULL) {
+        emit_condition(p->condition);
+        printf(" && ");
+    }
+    printf("guard ) {\n");
+    printf("    time = millis();\n");
+    printf("    state_%s();\n", p->newstate);
+    printf("  } \n  else ");
+  }
+  printf("{\n");
   printf("    state_%s();\n", current_state);
   printf("  }\n");
 }
@@ -243,8 +361,12 @@ static void emit_transition(char *current_state, Transition *transition) {
 static void emit_states(State *list) {
   for (State *p = list; p; p = p->next) {
     printf("void state_%s() {\n", p->name);
-    emit_actions(p->actions);
-    emit_transition(p->name, p->transition);
+    if (p->transition->temp_condition != NULL) {
+      emit_delay_action(p);
+    }else {
+      emit_actions(p->actions);
+    }
+    emit_transitions(p->name, p->transition);
     printf("}\n\n");
   }
 }

@@ -1,0 +1,15 @@
+application foo {
+    
+    sensor button1 : 8;
+    actuator LED1 : 9;
+
+    -> off {
+        LED1 <= LOW;
+        button1 is HIGH and 500 => on;
+    }
+
+    on {
+        LED1 <= HIGH;
+        button1 is LOW => off;
+    }
+}
