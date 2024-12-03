@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { CompositeGeneratorNode, NL, toString } from 'langium';
 import path from 'path';
-import { Action, Actuator, App, Condition, LogicalOperator, Sensor, State, Transition} from '../language-server/generated/ast';
+import { Action, Actuator, App, Condition,SimpleCondition,MultipleCondition, LogicalOperator, Sensor, State, Transition, isSimpleCondition, isMultipleCondition} from '../language-server/generated/ast';
 import { extractDestinationAndName } from './cli-util';
 
 export function generateInoFile(app: App, filePath: string, destination: string | undefined): string {
@@ -99,24 +99,70 @@ long `+brick.name+`LastDebounceTime = 0;
 	}
 
 	function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {
-		if (transition.conditions.length === 0) {
-			throw new Error("Transition must have at least one condition.");
+		if (!transition.condition) {
+			throw new Error("Transition must have one condition.");
+		}
+		const sensorName = isSimpleCondition(transition.condition)
+		? (transition.condition as SimpleCondition).sensor.ref?.name
+		: "compoundCondition";
+
+		
+		fileNode.append(`\n\t\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+		fileNode.append(`\t\t\t\t\tif ( `);
+		compileCondition(transition.condition, fileNode);
+		fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
+		fileNode.append(`\t\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+		fileNode.append(`\t\t\t\t\t\tcurrentState = ${transition.next.ref?.name};\n`);
+		fileNode.append(`\t\t\t\t\t}\n`)
+
+	
+	}
+
+	function compileCondition(condition: Condition, fileNode: CompositeGeneratorNode) {
+		if (isSimpleCondition(condition)) {
+			compileSimpleCondition(condition, fileNode);
+		} else if (isMultipleCondition(condition)) {
+			compileMultipleCondition(condition, fileNode);
+		} else {
+			throw new Error("Invalid condition: missing simpleCondition or multipleCondition.");
+		}
+
+	}
+
+	function compileSimpleCondition(condition: SimpleCondition, fileNode: CompositeGeneratorNode) {
+		const sensor = condition.sensor.ref;
+		const value = condition.value.value;
+	
+		if (!sensor || sensor.inputPin === undefined || value === undefined) {
+			throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
 		}
 	
-		const conditionStrings = transition.conditions.map((condition) => generateCondition(condition, fileNode));
+		//const sensorName = sensor.name;
+		const inputPin = sensor.inputPin;
+	
+		const conditionCode = `digitalRead(${inputPin}) == ${value}`;
+    	fileNode.append(conditionCode);
+
+	}
+
+	function compileMultipleCondition(condition: MultipleCondition, fileNode: CompositeGeneratorNode) {
+		const conditionStrings: string[] = [];
+		for (const cond of condition.conditions) {
+			const conditionNode = new CompositeGeneratorNode();
+			compileCondition(cond, conditionNode);
+			conditionStrings.push(toString(conditionNode));
+		}
 	
 		let combinedConditions = conditionStrings[0];
 	
 		for (let i = 1; i < conditionStrings.length; i++) {
-			const operator = transition.operator[i - 1]; 
+			const operator = condition.operator; 
 			const operatorString = getLogicalOperatorString(operator);
-			combinedConditions += `\t\t\t\t${operatorString} ${conditionStrings[i]}`;
+			combinedConditions += `${operatorString} ${conditionStrings[i]}`;
 		}
 	
 		fileNode.append(`
-					if (${combinedConditions}) {
-						currentState = ${transition.next.ref?.name};
-					}
+					(${combinedConditions}) 
 		`);
 	}
 	
@@ -133,7 +179,7 @@ long `+brick.name+`LastDebounceTime = 0;
 		}
 	}
 	
-	function generateCondition(condition: Condition, fileNode: CompositeGeneratorNode): string {
+	/*function generateCondition(condition: Condition, fileNode: CompositeGeneratorNode): string {
 		const sensor = condition.sensor.ref;
 		const value = condition.value.value;
 	
@@ -148,5 +194,5 @@ long `+brick.name+`LastDebounceTime = 0;
 						(millis() - ${sensorName}LastDebounceTime > debounce &&
 						digitalRead(${inputPin}) == ${value})
 		`;
-	}
+	}*/
 	

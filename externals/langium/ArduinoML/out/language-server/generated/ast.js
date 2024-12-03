@@ -4,7 +4,7 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isState = exports.State = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isLogicalOperator = exports.LogicalOperator = exports.isCondition = exports.Condition = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isBrick = exports.Brick = void 0;
+exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isState = exports.State = exports.isSimpleCondition = exports.SimpleCondition = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isMultipleCondition = exports.MultipleCondition = exports.isLogicalOperator = exports.LogicalOperator = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isCondition = exports.Condition = exports.isBrick = exports.Brick = void 0;
 /* eslint-disable */
 const langium_1 = require("langium");
 exports.Brick = 'Brick';
@@ -12,6 +12,11 @@ function isBrick(item) {
     return exports.reflection.isInstance(item, exports.Brick);
 }
 exports.isBrick = isBrick;
+exports.Condition = 'Condition';
+function isCondition(item) {
+    return exports.reflection.isInstance(item, exports.Condition);
+}
+exports.isCondition = isCondition;
 exports.Action = 'Action';
 function isAction(item) {
     return exports.reflection.isInstance(item, exports.Action);
@@ -27,16 +32,16 @@ function isApp(item) {
     return exports.reflection.isInstance(item, exports.App);
 }
 exports.isApp = isApp;
-exports.Condition = 'Condition';
-function isCondition(item) {
-    return exports.reflection.isInstance(item, exports.Condition);
-}
-exports.isCondition = isCondition;
 exports.LogicalOperator = 'LogicalOperator';
 function isLogicalOperator(item) {
     return exports.reflection.isInstance(item, exports.LogicalOperator);
 }
 exports.isLogicalOperator = isLogicalOperator;
+exports.MultipleCondition = 'MultipleCondition';
+function isMultipleCondition(item) {
+    return exports.reflection.isInstance(item, exports.MultipleCondition);
+}
+exports.isMultipleCondition = isMultipleCondition;
 exports.Sensor = 'Sensor';
 function isSensor(item) {
     return exports.reflection.isInstance(item, exports.Sensor);
@@ -47,6 +52,11 @@ function isSignal(item) {
     return exports.reflection.isInstance(item, exports.Signal);
 }
 exports.isSignal = isSignal;
+exports.SimpleCondition = 'SimpleCondition';
+function isSimpleCondition(item) {
+    return exports.reflection.isInstance(item, exports.SimpleCondition);
+}
+exports.isSimpleCondition = isSimpleCondition;
 exports.State = 'State';
 function isState(item) {
     return exports.reflection.isInstance(item, exports.State);
@@ -59,13 +69,17 @@ function isTransition(item) {
 exports.isTransition = isTransition;
 class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
     getAllTypes() {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'Sensor', 'Signal', 'State', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'Transition'];
     }
     computeIsSubtype(subtype, supertype) {
         switch (subtype) {
             case exports.Actuator:
             case exports.Sensor: {
                 return this.isSubtype(exports.Brick, supertype);
+            }
+            case exports.MultipleCondition:
+            case exports.SimpleCondition: {
+                return this.isSubtype(exports.Condition, supertype);
             }
             default: {
                 return false;
@@ -82,7 +96,7 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
             case 'Transition:next': {
                 return exports.State;
             }
-            case 'Condition:sensor': {
+            case 'SimpleCondition:sensor': {
                 return exports.Sensor;
             }
             default: {
@@ -101,20 +115,19 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
                     ]
                 };
             }
+            case 'MultipleCondition': {
+                return {
+                    name: 'MultipleCondition',
+                    mandatory: [
+                        { name: 'conditions', type: 'array' }
+                    ]
+                };
+            }
             case 'State': {
                 return {
                     name: 'State',
                     mandatory: [
                         { name: 'actions', type: 'array' }
-                    ]
-                };
-            }
-            case 'Transition': {
-                return {
-                    name: 'Transition',
-                    mandatory: [
-                        { name: 'conditions', type: 'array' },
-                        { name: 'operator', type: 'array' }
                     ]
                 };
             }

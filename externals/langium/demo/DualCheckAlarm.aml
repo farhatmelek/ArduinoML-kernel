@@ -7,10 +7,10 @@ app DualCheckAlarmApp initial state off {
     states
         off {
             buzzer <= LOW
-            button1 is HIGH AND button2 is HIGH => alarm
+            (button1 is HIGH AND  button2 is HIGH) => alarm
         }
         alarm {
             buzzer <= HIGH
-            button1 is LOW OR button2 is LOW => off
+            (button1 is LOW OR button2 is LOW) => off
         }
 }

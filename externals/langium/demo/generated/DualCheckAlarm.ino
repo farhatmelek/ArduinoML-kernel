@@ -27,29 +27,25 @@ long button2LastDebounceTime = 0;
 
 				case off:
 					digitalWrite(3,LOW);
-					if (
-						(millis() - button1LastDebounceTime > debounce &&
-						digitalRead(8) == HIGH)
-						&& 
-						(millis() - button2LastDebounceTime > debounce &&
-						digitalRead(9) == HIGH)
-					) {
+					const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+					if ( 
+					(digitalRead(8) == HIGH&& digitalRead(9) == HIGH) 
+					 && compoundConditionBounceGuard) {
+						compoundConditionLastDebounceTime = millis();
 						currentState = alarm;
 					}
-		
+
 				break;
 				case alarm:
 					digitalWrite(3,HIGH);
-					if (
-						(millis() - button1LastDebounceTime > debounce &&
-						digitalRead(8) == LOW)
-						|| 
-						(millis() - button2LastDebounceTime > debounce &&
-						digitalRead(9) == LOW)
-					) {
+					const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+					if ( 
+					(digitalRead(8) == LOW|| digitalRead(9) == LOW) 
+					 && compoundConditionBounceGuard) {
+						compoundConditionLastDebounceTime = millis();
 						currentState = off;
 					}
-		
+
 				break;
 		}
 	}

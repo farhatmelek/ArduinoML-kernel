@@ -7,6 +7,7 @@ exports.generateInoFile = void 0;
 const fs_1 = __importDefault(require("fs"));
 const langium_1 = require("langium");
 const path_1 = __importDefault(require("path"));
+const ast_1 = require("../language-server/generated/ast");
 const cli_util_1 = require("./cli-util");
 function generateInoFile(app, filePath, destination) {
     const data = (0, cli_util_1.extractDestinationAndName)(filePath, destination);
@@ -87,24 +88,58 @@ function compileAction(action, fileNode) {
 					digitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
 }
 function compileTransition(transition, fileNode) {
-    var _a;
-    if (transition.conditions.length === 0) {
-        throw new Error("Transition must have at least one condition.");
+    var _a, _b;
+    if (!transition.condition) {
+        throw new Error("Transition must have one condition.");
     }
-    // Générer les conditions combinées
-    const conditionStrings = transition.conditions.map((condition) => generateCondition(condition, fileNode));
-    // Initialiser la chaîne de conditions combinées
+    const sensorName = (0, ast_1.isSimpleCondition)(transition.condition)
+        ? (_a = transition.condition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name
+        : "compoundCondition";
+    fileNode.append(`\n\t\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+    fileNode.append(`\t\t\t\t\tif ( `);
+    compileCondition(transition.condition, fileNode);
+    fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
+    fileNode.append(`\t\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+    fileNode.append(`\t\t\t\t\t\tcurrentState = ${(_b = transition.next.ref) === null || _b === void 0 ? void 0 : _b.name};\n`);
+    fileNode.append(`\t\t\t\t\t}\n`);
+}
+function compileCondition(condition, fileNode) {
+    if ((0, ast_1.isSimpleCondition)(condition)) {
+        compileSimpleCondition(condition, fileNode);
+    }
+    else if ((0, ast_1.isMultipleCondition)(condition)) {
+        compileMultipleCondition(condition, fileNode);
+    }
+    else {
+        throw new Error("Invalid condition: missing simpleCondition or multipleCondition.");
+    }
+}
+function compileSimpleCondition(condition, fileNode) {
+    const sensor = condition.sensor.ref;
+    const value = condition.value.value;
+    if (!sensor || sensor.inputPin === undefined || value === undefined) {
+        throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
+    }
+    //const sensorName = sensor.name;
+    const inputPin = sensor.inputPin;
+    const conditionCode = `digitalRead(${inputPin}) == ${value}`;
+    fileNode.append(conditionCode);
+}
+function compileMultipleCondition(condition, fileNode) {
+    const conditionStrings = [];
+    for (const cond of condition.conditions) {
+        const conditionNode = new langium_1.CompositeGeneratorNode();
+        compileCondition(cond, conditionNode);
+        conditionStrings.push((0, langium_1.toString)(conditionNode));
+    }
     let combinedConditions = conditionStrings[0];
-    // Traiter les opérateurs logiques pour combiner les conditions
     for (let i = 1; i < conditionStrings.length; i++) {
-        const operator = transition.operator[i - 1]; // L'opérateur entre les conditions (AND, OR, etc.)
-        const operatorString = getLogicalOperatorString(operator); // Convertir l'opérateur en chaîne de caractères
-        combinedConditions += `\t\t\t\t${operatorString} ${conditionStrings[i]}`;
+        const operator = condition.operator;
+        const operatorString = getLogicalOperatorString(operator);
+        combinedConditions += `${operatorString} ${conditionStrings[i]}`;
     }
     fileNode.append(`
-					if (${combinedConditions}) {
-						currentState = ${(_a = transition.next.ref) === null || _a === void 0 ? void 0 : _a.name};
-					}
+					(${combinedConditions}) 
 		`);
 }
 function getLogicalOperatorString(operator) {
@@ -121,17 +156,20 @@ function getLogicalOperatorString(operator) {
         throw new Error(`Unsupported logical operator: ${operator}`);
     }
 }
-function generateCondition(condition, fileNode) {
+/*function generateCondition(condition: Condition, fileNode: CompositeGeneratorNode): string {
     const sensor = condition.sensor.ref;
     const value = condition.value.value;
+
     if (!sensor || sensor.inputPin === undefined || value === undefined) {
         throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
     }
+
     const sensorName = sensor.name;
     const inputPin = sensor.inputPin;
+
     return `
-						(millis() - ${sensorName}LastDebounceTime > debounce &&
-						digitalRead(${inputPin}) == ${value})
-		`;
-}
+                    (millis() - ${sensorName}LastDebounceTime > debounce &&
+                    digitalRead(${inputPin}) == ${value})
+    `;
+}*/
 //# sourceMappingURL=generator.js.map
