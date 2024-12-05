@@ -6,7 +6,7 @@ app LedController initial state off {
     states
         off {
             LED1 <= LOW
-            [(button1 is HIGH AND button1 is HIGH) AND 800 ms ]=> on
+            button1 is HIGH  AND 800 ms => on
         }
 
         on {

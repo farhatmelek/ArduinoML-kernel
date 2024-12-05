@@ -47,7 +47,7 @@ MultipleCondition:
     (operator=LogicalOperator conditions+=Condition)+ ')';
 
 TemporalCondition:
-    condition = '[' MultipleCondition 'AND' duration=INT 'ms' ']';
+    condition = (SimpleCondition | MultipleCondition) 'AND' duration=INT 'ms';
 
 Signal:
     value=(HIGH | LOW);

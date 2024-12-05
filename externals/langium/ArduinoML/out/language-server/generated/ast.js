@@ -4,7 +4,7 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reflection = exports.ArduinoMlAstReflection = exports.isMultipleCondition = exports.MultipleCondition = exports.isTransition = exports.Transition = exports.isTemporalCondition = exports.TemporalCondition = exports.isState = exports.State = exports.isSimpleCondition = exports.SimpleCondition = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isLogicalOperator = exports.LogicalOperator = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isCondition = exports.Condition = exports.isBrick = exports.Brick = void 0;
+exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isTemporalCondition = exports.TemporalCondition = exports.isState = exports.State = exports.isSimpleCondition = exports.SimpleCondition = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isMultipleCondition = exports.MultipleCondition = exports.isLogicalOperator = exports.LogicalOperator = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isCondition = exports.Condition = exports.isBrick = exports.Brick = void 0;
 /* eslint-disable */
 const langium_1 = require("langium");
 exports.Brick = 'Brick';
@@ -37,6 +37,11 @@ function isLogicalOperator(item) {
     return exports.reflection.isInstance(item, exports.LogicalOperator);
 }
 exports.isLogicalOperator = isLogicalOperator;
+exports.MultipleCondition = 'MultipleCondition';
+function isMultipleCondition(item) {
+    return exports.reflection.isInstance(item, exports.MultipleCondition);
+}
+exports.isMultipleCondition = isMultipleCondition;
 exports.Sensor = 'Sensor';
 function isSensor(item) {
     return exports.reflection.isInstance(item, exports.Sensor);
@@ -67,11 +72,6 @@ function isTransition(item) {
     return exports.reflection.isInstance(item, exports.Transition);
 }
 exports.isTransition = isTransition;
-exports.MultipleCondition = 'MultipleCondition';
-function isMultipleCondition(item) {
-    return exports.reflection.isInstance(item, exports.MultipleCondition);
-}
-exports.isMultipleCondition = isMultipleCondition;
 class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
     getAllTypes() {
         return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
@@ -82,12 +82,10 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
             case exports.Sensor: {
                 return this.isSubtype(exports.Brick, supertype);
             }
+            case exports.MultipleCondition:
             case exports.SimpleCondition:
             case exports.TemporalCondition: {
                 return this.isSubtype(exports.Condition, supertype);
-            }
-            case exports.MultipleCondition: {
-                return this.isSubtype(exports.Condition, supertype) || this.isSubtype(exports.TemporalCondition, supertype);
             }
             default: {
                 return false;
@@ -123,19 +121,19 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
                     ]
                 };
             }
-            case 'State': {
-                return {
-                    name: 'State',
-                    mandatory: [
-                        { name: 'actions', type: 'array' }
-                    ]
-                };
-            }
             case 'MultipleCondition': {
                 return {
                     name: 'MultipleCondition',
                     mandatory: [
                         { name: 'conditions', type: 'array' }
+                    ]
+                };
+            }
+            case 'State': {
+                return {
+                    name: 'State',
+                    mandatory: [
+                        { name: 'actions', type: 'array' }
                     ]
                 };
             }

@@ -76,6 +76,19 @@ export function isLogicalOperator(item: unknown): item is LogicalOperator {
     return reflection.isInstance(item, LogicalOperator);
 }
 
+export interface MultipleCondition extends AstNode {
+    readonly $container: MultipleCondition | TemporalCondition | Transition;
+    readonly $type: 'MultipleCondition';
+    conditions: Array<Condition>
+    operator: LogicalOperator
+}
+
+export const MultipleCondition = 'MultipleCondition';
+
+export function isMultipleCondition(item: unknown): item is MultipleCondition {
+    return reflection.isInstance(item, MultipleCondition);
+}
+
 export interface Sensor extends AstNode {
     readonly $container: App;
     readonly $type: 'Sensor';
@@ -102,7 +115,7 @@ export function isSignal(item: unknown): item is Signal {
 }
 
 export interface SimpleCondition extends AstNode {
-    readonly $container: MultipleCondition | Transition;
+    readonly $container: MultipleCondition | TemporalCondition | Transition;
     readonly $type: 'SimpleCondition';
     sensor: Reference<Sensor>
     value: Signal
@@ -129,9 +142,9 @@ export function isState(item: unknown): item is State {
 }
 
 export interface TemporalCondition extends AstNode {
-    readonly $container: MultipleCondition | Transition;
-    readonly $type: 'MultipleCondition' | 'TemporalCondition';
-    condition: '['
+    readonly $container: MultipleCondition | TemporalCondition | Transition;
+    readonly $type: 'TemporalCondition';
+    condition: MultipleCondition | SimpleCondition
     duration: number
 }
 
@@ -152,19 +165,6 @@ export const Transition = 'Transition';
 
 export function isTransition(item: unknown): item is Transition {
     return reflection.isInstance(item, Transition);
-}
-
-export interface MultipleCondition extends TemporalCondition {
-    readonly $container: MultipleCondition | Transition;
-    readonly $type: 'MultipleCondition';
-    conditions: Array<Condition>
-    operator: LogicalOperator
-}
-
-export const MultipleCondition = 'MultipleCondition';
-
-export function isMultipleCondition(item: unknown): item is MultipleCondition {
-    return reflection.isInstance(item, MultipleCondition);
 }
 
 export interface ArduinoMlAstType {
@@ -195,12 +195,10 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
             case Sensor: {
                 return this.isSubtype(Brick, supertype);
             }
+            case MultipleCondition:
             case SimpleCondition:
             case TemporalCondition: {
                 return this.isSubtype(Condition, supertype);
-            }
-            case MultipleCondition: {
-                return this.isSubtype(Condition, supertype) || this.isSubtype(TemporalCondition, supertype);
             }
             default: {
                 return false;
@@ -238,19 +236,19 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
                     ]
                 };
             }
-            case 'State': {
-                return {
-                    name: 'State',
-                    mandatory: [
-                        { name: 'actions', type: 'array' }
-                    ]
-                };
-            }
             case 'MultipleCondition': {
                 return {
                     name: 'MultipleCondition',
                     mandatory: [
                         { name: 'conditions', type: 'array' }
+                    ]
+                };
+            }
+            case 'State': {
+                return {
+                    name: 'State',
+                    mandatory: [
+                        { name: 'actions', type: 'array' }
                     ]
                 };
             }

@@ -606,16 +606,24 @@ export const ArduinoMlGrammar = (): Grammar => loadedArduinoMlGrammar ?? (loaded
             "feature": "condition",
             "operator": "=",
             "terminal": {
-              "$type": "Keyword",
-              "value": "["
+              "$type": "Alternatives",
+              "elements": [
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@8"
+                  },
+                  "arguments": []
+                },
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@9"
+                  },
+                  "arguments": []
+                }
+              ]
             }
-          },
-          {
-            "$type": "RuleCall",
-            "rule": {
-              "$ref": "#/rules@9"
-            },
-            "arguments": []
           },
           {
             "$type": "Keyword",
@@ -636,10 +644,6 @@ export const ArduinoMlGrammar = (): Grammar => loadedArduinoMlGrammar ?? (loaded
           {
             "$type": "Keyword",
             "value": "ms"
-          },
-          {
-            "$type": "Keyword",
-            "value": "]"
           }
         ]
       },

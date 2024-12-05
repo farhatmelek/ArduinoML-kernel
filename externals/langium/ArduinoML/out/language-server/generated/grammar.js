@@ -607,16 +607,24 @@ const ArduinoMlGrammar = () => loadedArduinoMlGrammar !== null && loadedArduinoM
             "feature": "condition",
             "operator": "=",
             "terminal": {
-              "$type": "Keyword",
-              "value": "["
+              "$type": "Alternatives",
+              "elements": [
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@8"
+                  },
+                  "arguments": []
+                },
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@9"
+                  },
+                  "arguments": []
+                }
+              ]
             }
-          },
-          {
-            "$type": "RuleCall",
-            "rule": {
-              "$ref": "#/rules@9"
-            },
-            "arguments": []
           },
           {
             "$type": "Keyword",
@@ -637,10 +645,6 @@ const ArduinoMlGrammar = () => loadedArduinoMlGrammar !== null && loadedArduinoM
           {
             "$type": "Keyword",
             "value": "ms"
-          },
-          {
-            "$type": "Keyword",
-            "value": "]"
           }
         ]
       },
