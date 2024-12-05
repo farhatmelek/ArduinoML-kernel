@@ -14,7 +14,7 @@ export function isBrick(item: unknown): item is Brick {
     return reflection.isInstance(item, Brick);
 }
 
-export type Condition = MultipleCondition | SimpleCondition;
+export type Condition = MultipleCondition | SimpleCondition | TemporalCondition;
 
 export const Condition = 'Condition';
 
@@ -76,19 +76,6 @@ export function isLogicalOperator(item: unknown): item is LogicalOperator {
     return reflection.isInstance(item, LogicalOperator);
 }
 
-export interface MultipleCondition extends AstNode {
-    readonly $container: MultipleCondition | Transition;
-    readonly $type: 'MultipleCondition';
-    conditions: Array<Condition>
-    operator: LogicalOperator
-}
-
-export const MultipleCondition = 'MultipleCondition';
-
-export function isMultipleCondition(item: unknown): item is MultipleCondition {
-    return reflection.isInstance(item, MultipleCondition);
-}
-
 export interface Sensor extends AstNode {
     readonly $container: App;
     readonly $type: 'Sensor';
@@ -141,6 +128,19 @@ export function isState(item: unknown): item is State {
     return reflection.isInstance(item, State);
 }
 
+export interface TemporalCondition extends AstNode {
+    readonly $container: MultipleCondition | Transition;
+    readonly $type: 'MultipleCondition' | 'TemporalCondition';
+    condition: '['
+    duration: number
+}
+
+export const TemporalCondition = 'TemporalCondition';
+
+export function isTemporalCondition(item: unknown): item is TemporalCondition {
+    return reflection.isInstance(item, TemporalCondition);
+}
+
 export interface Transition extends AstNode {
     readonly $container: State;
     readonly $type: 'Transition';
@@ -152,6 +152,19 @@ export const Transition = 'Transition';
 
 export function isTransition(item: unknown): item is Transition {
     return reflection.isInstance(item, Transition);
+}
+
+export interface MultipleCondition extends TemporalCondition {
+    readonly $container: MultipleCondition | Transition;
+    readonly $type: 'MultipleCondition';
+    conditions: Array<Condition>
+    operator: LogicalOperator
+}
+
+export const MultipleCondition = 'MultipleCondition';
+
+export function isMultipleCondition(item: unknown): item is MultipleCondition {
+    return reflection.isInstance(item, MultipleCondition);
 }
 
 export interface ArduinoMlAstType {
@@ -166,13 +179,14 @@ export interface ArduinoMlAstType {
     Signal: Signal
     SimpleCondition: SimpleCondition
     State: State
+    TemporalCondition: TemporalCondition
     Transition: Transition
 }
 
 export class ArduinoMlAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -181,9 +195,12 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
             case Sensor: {
                 return this.isSubtype(Brick, supertype);
             }
-            case MultipleCondition:
-            case SimpleCondition: {
+            case SimpleCondition:
+            case TemporalCondition: {
                 return this.isSubtype(Condition, supertype);
+            }
+            case MultipleCondition: {
+                return this.isSubtype(Condition, supertype) || this.isSubtype(TemporalCondition, supertype);
             }
             default: {
                 return false;
@@ -221,19 +238,19 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
                     ]
                 };
             }
-            case 'MultipleCondition': {
-                return {
-                    name: 'MultipleCondition',
-                    mandatory: [
-                        { name: 'conditions', type: 'array' }
-                    ]
-                };
-            }
             case 'State': {
                 return {
                     name: 'State',
                     mandatory: [
                         { name: 'actions', type: 'array' }
+                    ]
+                };
+            }
+            case 'MultipleCondition': {
+                return {
+                    name: 'MultipleCondition',
+                    mandatory: [
+                        { name: 'conditions', type: 'array' }
                     ]
                 };
             }

@@ -37,7 +37,7 @@ Transition :
     condition=Condition '=>' next=[State:ID];
 
 Condition:
-    SimpleCondition | MultipleCondition;
+    SimpleCondition | MultipleCondition | TemporalCondition;
 
 SimpleCondition:
     sensor=[Sensor:ID] 'is' value=Signal;
@@ -45,6 +45,9 @@ SimpleCondition:
 MultipleCondition:
     '(' conditions+=Condition
     (operator=LogicalOperator conditions+=Condition)+ ')';
+
+TemporalCondition:
+    condition = '[' MultipleCondition 'AND' duration=INT 'ms' ']';
 
 Signal:
     value=(HIGH | LOW);
