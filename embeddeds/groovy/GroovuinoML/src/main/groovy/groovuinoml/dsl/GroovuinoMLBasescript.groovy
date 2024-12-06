@@ -47,17 +47,23 @@ abstract class GroovuinoMLBasescript extends Script {
 	}
 	
 	// from state1 to state2 when sensor becomes signal
+/*
 	def from(state1) {
-		[to: { state2 -> 
-			[when: { sensor ->
-				[becomes: { signal -> 
-					((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
-						state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1, 
-						state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2, 
-						sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor, 
+
+		def closure
+		closure = { sensor ->
+			[becomes: { signal ->
+				((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
+						state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1,
+						state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2,
+						sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor,
 						signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
-				}]
-			},
+				[and: closure]
+			}]
+		}
+
+		[to: { state2 ->
+			[when: closure,
 			after: { delay ->
 				((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
 						state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1,
@@ -66,7 +72,28 @@ abstract class GroovuinoMLBasescript extends Script {
 			}]
 		}]
 	}
-	
+*/
+	def from(state1) {
+		[to: { state2 ->
+			[when: { sensor ->
+				[becomes: { signal ->
+					((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
+							state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1,
+							state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2,
+							sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor,
+							signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+				}]
+			},
+			 after: { delay ->
+				 ((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
+						 state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1,
+						 state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2,
+						 delay)
+			 }]
+		}]
+	}
+
+
 	// export name
 	def export(String name) {
 		println(((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().generateCode(name).toString())
