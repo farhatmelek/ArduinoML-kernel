@@ -144,14 +144,20 @@ function compileTransition(transition: Transition, fileNode: CompositeGeneratorN
 	? (transition.condition as SimpleCondition).sensor.ref?.name
 	: "compoundCondition";
 
-	
+	if(!isTemporalCondition(transition.condition)){
 	fileNode.append(`\n\t\t\t\t${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
 	fileNode.append(`\n\t\t\t\tif ( `);
+	}
 	compileCondition(transition.condition, fileNode);
+	if(!isTemporalCondition(transition.condition)){
 	fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
 	fileNode.append(`\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+	}
 	fileNode.append(`\t\t\t\t\tcurrentState = ${transition.next.ref?.name};\n`);
 	fileNode.append(`\t\t\t\t\t}\n`)
+	if(isTemporalCondition(transition.condition)){
+		fileNode.append(`\t\t\t\t}`);
+	}
 
 
 }
@@ -215,13 +221,14 @@ function compileTemporalCondition(condition: TemporalCondition, fileNode: Compos
 	const uniqueTimer = `timer_${Math.random().toString(36).substring(2)}`;
 
 	fileNode.append(`
-		static unsigned long ${uniqueTimer} = 0; // Timer for temporal condition
-		if (${toString(innerConditionNode)}) {
-			if (${uniqueTimer} == 0) {
-				${uniqueTimer} = millis(); // Start timer
-			}
-			if (millis() - ${uniqueTimer} >= ${duration}) {
-				${uniqueTimer} = 0; // Reset timer
+				// Timer for temporal condition
+				static unsigned long ${uniqueTimer} = 0; 
+				if (${toString(innerConditionNode)}) {
+					if (${uniqueTimer} == 0) {
+						${uniqueTimer} = millis(); // Start timer
+					}
+					if (millis() - ${uniqueTimer} >= ${duration}) {
+						${uniqueTimer} = 0; // Reset timer
 	`);
 
 }

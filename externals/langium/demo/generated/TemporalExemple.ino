@@ -34,21 +34,17 @@ long compoundConditionLastDebounceTime = 0;
 				break;
 			case on:
 				digitalWrite(12,HIGH);
-				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
-
-				if ( 
-		static unsigned long timer_dmaoxbx2gxe = 0; // Timer for temporal condition
-		if (digitalRead(10) == LOW) {
-			if (timer_dmaoxbx2gxe == 0) {
-				timer_dmaoxbx2gxe = millis(); // Start timer
-			}
-			if (millis() - timer_dmaoxbx2gxe >= 800) {
-				timer_dmaoxbx2gxe = 0; // Reset timer
-				 && compoundConditionBounceGuard) {
-					compoundConditionLastDebounceTime = millis();
-					currentState = off;
+				// Timer for temporal condition
+				static unsigned long timer_tp0ao8vr14 = 0; 
+				if (digitalRead(10) == LOW) {
+					if (timer_tp0ao8vr14 == 0) {
+						timer_tp0ao8vr14 = millis(); // Start timer
 					}
-
+					if (millis() - timer_tp0ao8vr14 >= 800) {
+						timer_tp0ao8vr14 = 0; // Reset timer
+						currentState = off;
+					}
+				}
 				break;
 		}
 	}

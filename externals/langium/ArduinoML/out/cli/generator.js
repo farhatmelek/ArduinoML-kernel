@@ -129,13 +129,20 @@ function compileTransition(transition, fileNode) {
     const sensorName = (0, ast_1.isSimpleCondition)(transition.condition)
         ? (_a = transition.condition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name
         : "compoundCondition";
-    fileNode.append(`\n\t\t\t\t${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
-    fileNode.append(`\n\t\t\t\tif ( `);
+    if (!(0, ast_1.isTemporalCondition)(transition.condition)) {
+        fileNode.append(`\n\t\t\t\t${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+        fileNode.append(`\n\t\t\t\tif ( `);
+    }
     compileCondition(transition.condition, fileNode);
-    fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
-    fileNode.append(`\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+    if (!(0, ast_1.isTemporalCondition)(transition.condition)) {
+        fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
+        fileNode.append(`\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+    }
     fileNode.append(`\t\t\t\t\tcurrentState = ${(_b = transition.next.ref) === null || _b === void 0 ? void 0 : _b.name};\n`);
     fileNode.append(`\t\t\t\t\t}\n`);
+    if ((0, ast_1.isTemporalCondition)(transition.condition)) {
+        fileNode.append(`\t\t\t\t}`);
+    }
 }
 function compileCondition(condition, fileNode) {
     if ((0, ast_1.isSimpleCondition)(condition)) {
@@ -185,13 +192,14 @@ function compileTemporalCondition(condition, fileNode) {
     const duration = condition.duration;
     const uniqueTimer = `timer_${Math.random().toString(36).substring(2)}`;
     fileNode.append(`
-		static unsigned long ${uniqueTimer} = 0; // Timer for temporal condition
-		if (${(0, langium_1.toString)(innerConditionNode)}) {
-			if (${uniqueTimer} == 0) {
-				${uniqueTimer} = millis(); // Start timer
-			}
-			if (millis() - ${uniqueTimer} >= ${duration}) {
-				${uniqueTimer} = 0; // Reset timer
+				// Timer for temporal condition
+				static unsigned long ${uniqueTimer} = 0; 
+				if (${(0, langium_1.toString)(innerConditionNode)}) {
+					if (${uniqueTimer} == 0) {
+						${uniqueTimer} = millis(); // Start timer
+					}
+					if (millis() - ${uniqueTimer} >= ${duration}) {
+						${uniqueTimer} = 0; // Reset timer
 	`);
 }
 function getLogicalOperatorString(operator) {
