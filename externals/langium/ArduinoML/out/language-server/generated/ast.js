@@ -4,7 +4,7 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reflection = exports.ArduinoMlAstReflection = exports.isTransition = exports.Transition = exports.isTemporalCondition = exports.TemporalCondition = exports.isState = exports.State = exports.isSimpleCondition = exports.SimpleCondition = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isMultipleCondition = exports.MultipleCondition = exports.isLogicalOperator = exports.LogicalOperator = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isCondition = exports.Condition = exports.isBrick = exports.Brick = void 0;
+exports.reflection = exports.ArduinoMlAstReflection = exports.isException = exports.Exception = exports.isTransition = exports.Transition = exports.isTemporalCondition = exports.TemporalCondition = exports.isState = exports.State = exports.isSimpleCondition = exports.SimpleCondition = exports.isSignal = exports.Signal = exports.isSensor = exports.Sensor = exports.isMultipleCondition = exports.MultipleCondition = exports.isLogicalOperator = exports.LogicalOperator = exports.isApp = exports.App = exports.isActuator = exports.Actuator = exports.isAction = exports.Action = exports.isCondition = exports.Condition = exports.isBrick = exports.Brick = void 0;
 /* eslint-disable */
 const langium_1 = require("langium");
 exports.Brick = 'Brick';
@@ -72,9 +72,14 @@ function isTransition(item) {
     return exports.reflection.isInstance(item, exports.Transition);
 }
 exports.isTransition = isTransition;
+exports.Exception = 'Exception';
+function isException(item) {
+    return exports.reflection.isInstance(item, exports.Exception);
+}
+exports.isException = isException;
 class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
     getAllTypes() {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'Exception', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
     }
     computeIsSubtype(subtype, supertype) {
         switch (subtype) {
@@ -87,6 +92,9 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
             case exports.TemporalCondition: {
                 return this.isSubtype(exports.Condition, supertype);
             }
+            case exports.Exception: {
+                return this.isSubtype(exports.Action, supertype);
+            }
             default: {
                 return false;
             }
@@ -95,7 +103,9 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
     getReferenceType(refInfo) {
         const referenceId = `${refInfo.container.$type}:${refInfo.property}`;
         switch (referenceId) {
-            case 'Action:actuator': {
+            case 'Action:actuator':
+            case 'Exception:actuator':
+            case 'Exception:actuator': {
                 return exports.Actuator;
             }
             case 'App:initial':
@@ -133,7 +143,8 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
                 return {
                     name: 'State',
                     mandatory: [
-                        { name: 'actions', type: 'array' }
+                        { name: 'actions', type: 'array' },
+                        { name: 'transitions', type: 'array' }
                     ]
                 };
             }

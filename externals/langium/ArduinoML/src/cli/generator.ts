@@ -85,9 +85,12 @@ long `+brick.name+`LastDebounceTime = 0;
 		for(const action of state.actions){
 			compileAction(action, fileNode)
 		}
-		if (state.transition !== null){
-			compileTransition(state.transition, fileNode)
+		for(const transition of state.transitions){
+			if (transition!== null){
+				compileTransition(transition, fileNode)
+			}
 		}
+		
 		fileNode.append(`
 				break;`)
     }

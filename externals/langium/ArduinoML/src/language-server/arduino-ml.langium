@@ -27,11 +27,19 @@ State :
     name=ID '{'
     actions+=Action
     (actions+=Action)* 
-    transition=Transition
+    (transitions+=Transition)*
     '}';
 
 Action :
-    actuator=[Actuator:ID] '<=' value=Signal;
+    actuator=[Actuator:ID] '<=' value=Signal
+    | Exception;
+
+Exception:
+    'exception' '{'
+        actuator=[Actuator:ID]
+        'pauseTime' pauseTime=INT
+        'errorNumber' errorNumber=INT
+    '}';
 
 Transition :
     condition=Condition '=>' next=[State:ID];

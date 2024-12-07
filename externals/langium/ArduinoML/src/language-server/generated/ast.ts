@@ -24,7 +24,7 @@ export function isCondition(item: unknown): item is Condition {
 
 export interface Action extends AstNode {
     readonly $container: State;
-    readonly $type: 'Action';
+    readonly $type: 'Action' | 'Exception';
     actuator: Reference<Actuator>
     value: Signal
 }
@@ -132,7 +132,7 @@ export interface State extends AstNode {
     readonly $type: 'State';
     actions: Array<Action>
     name: string
-    transition: Transition
+    transitions: Array<Transition>
 }
 
 export const State = 'State';
@@ -167,12 +167,27 @@ export function isTransition(item: unknown): item is Transition {
     return reflection.isInstance(item, Transition);
 }
 
+export interface Exception extends Action {
+    readonly $container: State;
+    readonly $type: 'Exception';
+    actuator: Reference<Actuator>
+    errorNumber: number
+    pauseTime: number
+}
+
+export const Exception = 'Exception';
+
+export function isException(item: unknown): item is Exception {
+    return reflection.isInstance(item, Exception);
+}
+
 export interface ArduinoMlAstType {
     Action: Action
     Actuator: Actuator
     App: App
     Brick: Brick
     Condition: Condition
+    Exception: Exception
     LogicalOperator: LogicalOperator
     MultipleCondition: MultipleCondition
     Sensor: Sensor
@@ -186,7 +201,7 @@ export interface ArduinoMlAstType {
 export class ArduinoMlAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
+        return ['Action', 'Actuator', 'App', 'Brick', 'Condition', 'Exception', 'LogicalOperator', 'MultipleCondition', 'Sensor', 'Signal', 'SimpleCondition', 'State', 'TemporalCondition', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -200,6 +215,9 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
             case TemporalCondition: {
                 return this.isSubtype(Condition, supertype);
             }
+            case Exception: {
+                return this.isSubtype(Action, supertype);
+            }
             default: {
                 return false;
             }
@@ -209,7 +227,9 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
     getReferenceType(refInfo: ReferenceInfo): string {
         const referenceId = `${refInfo.container.$type}:${refInfo.property}`;
         switch (referenceId) {
-            case 'Action:actuator': {
+            case 'Action:actuator':
+            case 'Exception:actuator':
+            case 'Exception:actuator': {
                 return Actuator;
             }
             case 'App:initial':
@@ -248,7 +268,8 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
                 return {
                     name: 'State',
                     mandatory: [
-                        { name: 'actions', type: 'array' }
+                        { name: 'actions', type: 'array' },
+                        { name: 'transitions', type: 'array' }
                     ]
                 };
             }
