@@ -12,39 +12,44 @@ long button1LastDebounceTime = 0;
 
             
 
+bool compoundConditionBounceGuard = false; 
+long compoundConditionLastDebounceTime = 0;
+	
 	void setup(){
-	pinMode(8, INPUT); // button1 [Sensor]
-	pinMode(9, OUTPUT); // LED1 [Actuator]
+	pinMode(10, INPUT); // button1 [Sensor]
+	pinMode(12, OUTPUT); // LED1 [Actuator]
 	}
 	void loop() {
 		switch(currentState){
 
 			case off:
-				digitalWrite(9,LOW);
-				const button1BounceGuard = millis() - button1LastDebounceTime > debounce;
+				digitalWrite(12,LOW);
+				button1BounceGuard = millis() - button1LastDebounceTime > debounce;
 
-				if ( digitalRead(8) == HIGH			 && button1BounceGuard) {
+				if ( digitalRead(10) == HIGH			 && button1BounceGuard) {
 					button1LastDebounceTime = millis();
 					currentState = on;
 					}
 
 				break;
 			case on:
-				digitalWrite(9,HIGH);
-			
-				static unsigned long timer_vqoi9v7zvol = 0; 
-				if (digitalRead(8) == LOW) {
-					if (timer_vqoi9v7zvol == 0) {
-						timer_vqoi9v7zvol = millis(); // Start timer
-					}
-					if (millis() - timer_vqoi9v7zvol >= 800) {
-						timer_vqoi9v7zvol = 0; // Reset timer
-						currentState = off;
-						
+				digitalWrite(12,HIGH);
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
-					break;
+				if ( 
+		static unsigned long timer_dmaoxbx2gxe = 0; // Timer for temporal condition
+		if (digitalRead(10) == LOW) {
+			if (timer_dmaoxbx2gxe == 0) {
+				timer_dmaoxbx2gxe = millis(); // Start timer
+			}
+			if (millis() - timer_dmaoxbx2gxe >= 800) {
+				timer_dmaoxbx2gxe = 0; // Reset timer
+				 && compoundConditionBounceGuard) {
+					compoundConditionLastDebounceTime = millis();
+					currentState = off;
 					}
-				}
+
+				break;
 		}
 	}
 	

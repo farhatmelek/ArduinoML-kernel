@@ -135,7 +135,8 @@ class ArduinoMlAstReflection extends langium_1.AbstractAstReflection {
                 return {
                     name: 'MultipleCondition',
                     mandatory: [
-                        { name: 'conditions', type: 'array' }
+                        { name: 'conditions', type: 'array' },
+                        { name: 'operator', type: 'array' }
                     ]
                 };
             }

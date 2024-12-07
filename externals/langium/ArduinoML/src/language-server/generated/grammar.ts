@@ -649,7 +649,7 @@ export const ArduinoMlGrammar = (): Grammar => loadedArduinoMlGrammar ?? (loaded
               {
                 "$type": "Assignment",
                 "feature": "operator",
-                "operator": "=",
+                "operator": "+=",
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {

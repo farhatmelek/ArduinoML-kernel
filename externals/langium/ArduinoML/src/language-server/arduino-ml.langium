@@ -52,7 +52,7 @@ SimpleCondition:
 
 MultipleCondition:
     '(' conditions+=Condition
-    (operator=LogicalOperator conditions+=Condition)+ ')';
+    (operator+=LogicalOperator conditions+=Condition)+ ')';
 
 TemporalCondition:
     condition = (SimpleCondition | MultipleCondition) 'AND' duration=INT 'ms';

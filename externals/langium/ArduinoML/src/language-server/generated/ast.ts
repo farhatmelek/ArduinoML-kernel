@@ -80,7 +80,7 @@ export interface MultipleCondition extends AstNode {
     readonly $container: MultipleCondition | TemporalCondition | Transition;
     readonly $type: 'MultipleCondition';
     conditions: Array<Condition>
-    operator: LogicalOperator
+    operator: Array<LogicalOperator>
 }
 
 export const MultipleCondition = 'MultipleCondition';
@@ -260,7 +260,8 @@ export class ArduinoMlAstReflection extends AbstractAstReflection {
                 return {
                     name: 'MultipleCondition',
                     mandatory: [
-                        { name: 'conditions', type: 'array' }
+                        { name: 'conditions', type: 'array' },
+                        { name: 'operator', type: 'array' }
                     ]
                 };
             }

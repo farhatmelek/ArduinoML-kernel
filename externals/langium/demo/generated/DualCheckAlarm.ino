@@ -17,33 +17,38 @@ long button2LastDebounceTime = 0;
 
             
 
+bool compoundConditionBounceGuard = false; 
+long compoundConditionLastDebounceTime = 0;
+	
 	void setup(){
-		pinMode(3, OUTPUT); // buzzer [Actuator]
-		pinMode(8, INPUT); // button1 [Sensor]
-		pinMode(9, INPUT); // button2 [Sensor]
+	pinMode(11, OUTPUT); // buzzer [Actuator]
+	pinMode(9, INPUT); // button1 [Sensor]
+	pinMode(10, INPUT); // button2 [Sensor]
 	}
 	void loop() {
-			switch(currentState){
+		switch(currentState){
 
-				case off:
-					digitalWrite(3,LOW);
-					const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
-					if ( 
-					(digitalRead(8) == HIGH&& digitalRead(9) == HIGH) 
-					 && compoundConditionBounceGuard) {
-						compoundConditionLastDebounceTime = millis();
-						currentState = alarm;
+			case off:
+				digitalWrite(11,LOW);
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+
+				if ( 
+				(digitalRead(9) == HIGH && digitalRead(10) == HIGH) 
+				 && compoundConditionBounceGuard) {
+					compoundConditionLastDebounceTime = millis();
+					currentState = alarm;
 					}
 
 				break;
-				case alarm:
-					digitalWrite(3,HIGH);
-					const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
-					if ( 
-					(digitalRead(8) == LOW|| digitalRead(9) == LOW) 
-					 && compoundConditionBounceGuard) {
-						compoundConditionLastDebounceTime = millis();
-						currentState = off;
+			case alarm:
+				digitalWrite(11,HIGH);
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+
+				if ( 
+				(digitalRead(9) == LOW || digitalRead(10) == LOW) 
+				 && compoundConditionBounceGuard) {
+					compoundConditionLastDebounceTime = millis();
+					currentState = off;
 					}
 
 				break;

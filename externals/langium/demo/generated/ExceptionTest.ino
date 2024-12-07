@@ -17,29 +17,32 @@ long button2LastDebounceTime = 0;
 
             
 
+bool compoundConditionBounceGuard = false; 
+long compoundConditionLastDebounceTime = 0;
+	
 	void setup(){
-	pinMode(8, INPUT); // button1 [Sensor]
-	pinMode(9, INPUT); // button2 [Sensor]
-	pinMode(12, OUTPUT); // redLed [Actuator]
+	pinMode(10, INPUT); // button1 [Sensor]
+	pinMode(11, INPUT); // button2 [Sensor]
+	pinMode(12, OUTPUT); // red_red [Actuator]
 	}
 	void loop() {
 		switch(currentState){
 
 			case porteOuverte:
 				digitalWrite(12,LOW);
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == HIGH && digitalRead(9) == LOW) 
+				(digitalRead(10) == HIGH && digitalRead(11) == LOW) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = porteFermee;
 					}
 
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == HIGH && digitalRead(9) == HIGH) 
+				(digitalRead(10) == HIGH && digitalRead(11) == HIGH) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = exceptionState;
@@ -48,19 +51,19 @@ long button2LastDebounceTime = 0;
 				break;
 			case porteFermee:
 				digitalWrite(12,LOW);
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == LOW && digitalRead(9) == HIGH) 
+				(digitalRead(10) == LOW && digitalRead(11) == HIGH) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = porteOuverte;
 					}
 
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == HIGH && digitalRead(9) == HIGH) 
+				(digitalRead(10) == HIGH && digitalRead(11) == HIGH) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = exceptionState;
@@ -68,7 +71,7 @@ long button2LastDebounceTime = 0;
 
 				break;
 			case exceptionState:
-				// Gestion de l'exception : redLed - Erreur 3
+				// Gestion de l'exception : red_red - Erreur 3
 				for (int i = 0; i < 3; i++) {
 					digitalWrite(12, HIGH);
 					delay(500);
@@ -77,22 +80,22 @@ long button2LastDebounceTime = 0;
 				}
 
 				// Mettre en pause après les clignotements
-				delay(10); 
+				delay(1000); 
 		
 		
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == LOW && digitalRead(9) == HIGH) 
+				(digitalRead(10) == LOW && digitalRead(11) == HIGH) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = porteOuverte;
 					}
 
-				const compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
+				compoundConditionBounceGuard = millis() - compoundConditionLastDebounceTime > debounce;
 
 				if ( 
-				(digitalRead(8) == HIGH && digitalRead(9) == LOW) 
+				(digitalRead(10) == HIGH && digitalRead(11) == LOW || digitalRead(10) == LOW && digitalRead(11) == LOW) 
 				 && compoundConditionBounceGuard) {
 					compoundConditionLastDebounceTime = millis();
 					currentState = porteFermee;

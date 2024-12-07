@@ -41,6 +41,10 @@ long ` + brick.name + `LastDebounceTime = 0;
         }
     }
     fileNode.append(`
+bool compoundConditionBounceGuard = false; 
+long compoundConditionLastDebounceTime = 0;
+	`);
+    fileNode.append(`
 	void setup(){`);
     for (const brick of app.bricks) {
         if ("inputPin" in brick) {
@@ -125,7 +129,7 @@ function compileTransition(transition, fileNode) {
     const sensorName = (0, ast_1.isSimpleCondition)(transition.condition)
         ? (_a = transition.condition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name
         : "compoundCondition";
-    fileNode.append(`\n\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+    fileNode.append(`\n\t\t\t\t${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
     fileNode.append(`\n\t\t\t\tif ( `);
     compileCondition(transition.condition, fileNode);
     fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
@@ -168,7 +172,7 @@ function compileMultipleCondition(condition, fileNode) {
     let combinedConditions = conditionStrings[0];
     for (let i = 1; i < conditionStrings.length; i++) {
         const operator = condition.operator;
-        const operatorString = getLogicalOperatorString(operator);
+        const operatorString = getLogicalOperatorString(operator[i - 1]);
         combinedConditions += ` ${operatorString} ${conditionStrings[i]}`;
     }
     fileNode.append(`
