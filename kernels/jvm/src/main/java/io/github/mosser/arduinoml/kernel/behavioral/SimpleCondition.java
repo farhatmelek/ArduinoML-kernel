@@ -4,11 +4,14 @@ import io.github.mosser.arduinoml.kernel.generator.Visitor;
 import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
 import io.github.mosser.arduinoml.kernel.structural.Sensor;
 
+
+
+//Pattern Composite: leaf
 public class SimpleCondition extends Condition {
     private Sensor sensor;
     private SIGNAL value;
 
-
+  //Getter et Setter
     public Sensor getSensor() {
         return sensor;
     }
@@ -29,4 +32,6 @@ public class SimpleCondition extends Condition {
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }
+
+
 }
