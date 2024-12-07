@@ -1,6 +1,6 @@
 sensor "button" pin 9
 actuator "led" pin 12
-actuator "buzzer" pin 13
+actuator "buzzer" pin 10
 
 
 state "on" means "led" becomes "high" and "buzzer" becomes "high"
@@ -11,7 +11,7 @@ initial "off"
 from "on" to "off" when "button" becomes "low"
 from "off" to "on" when "button" becomes "high"
 
-export "Switch!"
+export "Very-simple-alarm!"
 
 
 

@@ -85,6 +85,8 @@ public class ToWiring extends Visitor<StringBuffer> {
 		}
 	}
 
+
+
 	@Override
 	public void visit(State state) {
 		if(context.get("pass") == PASS.ONE){
@@ -147,6 +149,17 @@ public class ToWiring extends Visitor<StringBuffer> {
 			w(String.format("\t\t\tdigitalWrite(%d,%s);\n",action.getActuator().getPin(),action.getValue()));
 			return;
 		}
+	}
+
+
+	@Override
+	public void visit(SimpleCondition simpleCondition) {
+
+	}
+
+	@Override
+	public void visit(MultipleCondition multipleCondition) {
+
 	}
 
 }

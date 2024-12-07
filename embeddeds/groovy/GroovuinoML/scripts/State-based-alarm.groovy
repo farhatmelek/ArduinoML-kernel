@@ -9,4 +9,4 @@ initial "off"
 from "off" to "on" when "button" becomes "high"
 from "on" to "off" when "button" becomes "high"
 
-export "Switch!"
+export "State-base-alarm!"
