@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { CompositeGeneratorNode, NL, toString } from 'langium';
 import path from 'path';
-import { Action, Actuator, App, Condition,SimpleCondition,MultipleCondition, LogicalOperator, Sensor, State, Transition, isSimpleCondition, isMultipleCondition} from '../language-server/generated/ast';
+import { Action, Actuator, App, Condition,SimpleCondition,MultipleCondition, LogicalOperator, Sensor, State, Transition, isSimpleCondition, isMultipleCondition, isException, Exception} from '../language-server/generated/ast';
 import { extractDestinationAndName } from './cli-util';
 
 export function generateInoFile(app: App, filePath: string, destination: string | undefined): string {
@@ -92,13 +92,43 @@ long `+brick.name+`LastDebounceTime = 0;
 		}
 		
 		fileNode.append(`
-				break;`)
+				\tbreak;`)
     }
 	
 
 	function compileAction(action: Action, fileNode:CompositeGeneratorNode) {
-		fileNode.append(`
-					digitalWrite(`+action.actuator.ref?.outputPin+`,`+action.value.value+`);`)
+		if (isException(action)){
+			compileException(action, fileNode)
+
+		}
+		else{
+			fileNode.append(`
+				\tdigitalWrite(`+action.actuator.ref?.outputPin+`,`+action.value.value+`);`)
+		}
+		
+	}
+
+	function compileException(exception: Exception, fileNode:CompositeGeneratorNode) {
+		const actuator = exception.actuator.ref;
+		const pauseTime = exception.pauseTime
+		const errorNumber = exception.errorNumber;
+		if (actuator) {
+			fileNode.append(`
+					// Gestion de l'exception : Actuator ${actuator.name} - Erreur ${errorNumber}
+					for (int i = 0; i < ${errorNumber}; i++) {
+						digitalWrite(${actuator.outputPin}, HIGH);
+						delay(500);
+						digitalWrite(${actuator.outputPin}, LOW);  
+						delay(500);  
+					}
+
+					// Mettre en pause après les clignotements
+					delay(${pauseTime}); 
+			
+			`);
+		} else {
+			throw new Error("Actuator is undefined.");
+		}		
 	}
 
 	function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {

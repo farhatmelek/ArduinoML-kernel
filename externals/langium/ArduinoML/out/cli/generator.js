@@ -82,12 +82,40 @@ function compileState(state, fileNode) {
         }
     }
     fileNode.append(`
-				break;`);
+				\tbreak;`);
 }
 function compileAction(action, fileNode) {
     var _a;
-    fileNode.append(`
-					digitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
+    if ((0, ast_1.isException)(action)) {
+        compileException(action, fileNode);
+    }
+    else {
+        fileNode.append(`
+				\tdigitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
+    }
+}
+function compileException(exception, fileNode) {
+    const actuator = exception.actuator.ref;
+    const pauseTime = exception.pauseTime;
+    const errorNumber = exception.errorNumber;
+    if (actuator) {
+        fileNode.append(`
+					// Gestion de l'exception : Actuator ${actuator.name} - Erreur ${errorNumber}
+					for (int i = 0; i < ${errorNumber}; i++) {
+						digitalWrite(${actuator.outputPin}, HIGH);
+						delay(500);
+						digitalWrite(${actuator.outputPin}, LOW);  
+						delay(500);  
+					}
+
+					// Mettre en pause après les clignotements
+					delay(${pauseTime}); 
+			
+			`);
+    }
+    else {
+        throw new Error("Actuator is undefined.");
+    }
 }
 function compileTransition(transition, fileNode) {
     var _a, _b;
