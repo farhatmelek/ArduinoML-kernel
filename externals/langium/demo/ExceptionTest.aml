@@ -1,24 +1,24 @@
 app Exception initial state porteFermee {
     bricks
-        Sensor button1 : 8
-        Sensor button2 : 9
-        Actuator redLed : 12
+        Sensor button1 : 10
+        Sensor button2 : 11
+        Actuator red_red : 12
     
     states
         porteOuverte {
-            redLed <= LOW
+            red_red <= LOW
             (button1 is HIGH AND button2 is LOW) => porteFermee
             (button1 is HIGH AND button2 is HIGH) => exceptionState
             
         }
         porteFermee {
-            redLed <= LOW
+            red_red <= LOW
             (button1 is LOW AND button2 is HIGH) => porteOuverte
             (button1 is HIGH AND button2 is HIGH) => exceptionState
         }
         exceptionState {
             exception{
-                redLed
+                red_red
                 pauseTime 10
                 errorNumber 3
             }

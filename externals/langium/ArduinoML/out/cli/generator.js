@@ -53,7 +53,7 @@ long ` + brick.name + `LastDebounceTime = 0;
     fileNode.append(`
 	}
 	void loop() {
-			switch(currentState){`, langium_1.NL);
+		switch(currentState){`, langium_1.NL);
     for (const state of app.states) {
         compileState(state, fileNode);
     }
@@ -64,15 +64,15 @@ long ` + brick.name + `LastDebounceTime = 0;
 }
 function compileActuator(actuator, fileNode) {
     fileNode.append(`
-		pinMode(` + actuator.outputPin + `, OUTPUT); // ` + actuator.name + ` [Actuator]`);
+	pinMode(` + actuator.outputPin + `, OUTPUT); // ` + actuator.name + ` [Actuator]`);
 }
 function compileSensor(sensor, fileNode) {
     fileNode.append(`
-		pinMode(` + sensor.inputPin + `, INPUT); // ` + sensor.name + ` [Sensor]`);
+	pinMode(` + sensor.inputPin + `, INPUT); // ` + sensor.name + ` [Sensor]`);
 }
 function compileState(state, fileNode) {
     fileNode.append(`
-				case ` + state.name + `:`);
+			case ` + state.name + `:`);
     for (const action of state.actions) {
         compileAction(action, fileNode);
     }
@@ -82,7 +82,7 @@ function compileState(state, fileNode) {
         }
     }
     fileNode.append(`
-				\tbreak;`);
+			\tbreak;`);
 }
 function compileAction(action, fileNode) {
     var _a;
@@ -91,7 +91,7 @@ function compileAction(action, fileNode) {
     }
     else {
         fileNode.append(`
-				\tdigitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
+			\tdigitalWrite(` + ((_a = action.actuator.ref) === null || _a === void 0 ? void 0 : _a.outputPin) + `,` + action.value.value + `);`);
     }
 }
 function compileException(exception, fileNode) {
@@ -100,18 +100,18 @@ function compileException(exception, fileNode) {
     const errorNumber = exception.errorNumber;
     if (actuator) {
         fileNode.append(`
-					// Gestion de l'exception : Actuator ${actuator.name} - Erreur ${errorNumber}
-					for (int i = 0; i < ${errorNumber}; i++) {
-						digitalWrite(${actuator.outputPin}, HIGH);
-						delay(500);
-						digitalWrite(${actuator.outputPin}, LOW);  
-						delay(500);  
-					}
+				// Gestion de l'exception : ${actuator.name} - Erreur ${errorNumber}
+				for (int i = 0; i < ${errorNumber}; i++) {
+					digitalWrite(${actuator.outputPin}, HIGH);
+					delay(500);
+					digitalWrite(${actuator.outputPin}, LOW);  
+					delay(500);  
+				}
 
-					// Mettre en pause après les clignotements
-					delay(${pauseTime}); 
-			
-			`);
+				// Mettre en pause après les clignotements
+				delay(${pauseTime}); 
+		
+		`);
     }
     else {
         throw new Error("Actuator is undefined.");
@@ -125,12 +125,12 @@ function compileTransition(transition, fileNode) {
     const sensorName = (0, ast_1.isSimpleCondition)(transition.condition)
         ? (_a = transition.condition.sensor.ref) === null || _a === void 0 ? void 0 : _a.name
         : "compoundCondition";
-    fileNode.append(`\n\t\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
-    fileNode.append(`\t\t\t\t\tif ( `);
+    fileNode.append(`\n\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+    fileNode.append(`\n\t\t\t\tif ( `);
     compileCondition(transition.condition, fileNode);
     fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
-    fileNode.append(`\t\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
-    fileNode.append(`\t\t\t\t\t\tcurrentState = ${(_b = transition.next.ref) === null || _b === void 0 ? void 0 : _b.name};\n`);
+    fileNode.append(`\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+    fileNode.append(`\t\t\t\t\tcurrentState = ${(_b = transition.next.ref) === null || _b === void 0 ? void 0 : _b.name};\n`);
     fileNode.append(`\t\t\t\t\t}\n`);
 }
 function compileCondition(condition, fileNode) {
@@ -139,6 +139,9 @@ function compileCondition(condition, fileNode) {
     }
     else if ((0, ast_1.isMultipleCondition)(condition)) {
         compileMultipleCondition(condition, fileNode);
+    }
+    else if ((0, ast_1.isTemporalCondition)(condition)) {
+        compileTemporalCondition(condition, fileNode);
     }
     else {
         throw new Error("Invalid condition: missing simpleCondition or multipleCondition.");
@@ -166,11 +169,26 @@ function compileMultipleCondition(condition, fileNode) {
     for (let i = 1; i < conditionStrings.length; i++) {
         const operator = condition.operator;
         const operatorString = getLogicalOperatorString(operator);
-        combinedConditions += `${operatorString} ${conditionStrings[i]}`;
+        combinedConditions += ` ${operatorString} ${conditionStrings[i]}`;
     }
     fileNode.append(`
-					(${combinedConditions}) 
-		`);
+				(${combinedConditions}) 
+	`);
+}
+function compileTemporalCondition(condition, fileNode) {
+    const innerConditionNode = new langium_1.CompositeGeneratorNode();
+    compileCondition(condition.condition, innerConditionNode);
+    const duration = condition.duration;
+    const uniqueTimer = `timer_${Math.random().toString(36).substring(2)}`;
+    fileNode.append(`
+		static unsigned long ${uniqueTimer} = 0; // Timer for temporal condition
+		if (${(0, langium_1.toString)(innerConditionNode)}) {
+			if (${uniqueTimer} == 0) {
+				${uniqueTimer} = millis(); // Start timer
+			}
+			if (millis() - ${uniqueTimer} >= ${duration}) {
+				${uniqueTimer} = 0; // Reset timer
+	`);
 }
 function getLogicalOperatorString(operator) {
     if (operator.AND) {
@@ -186,20 +204,4 @@ function getLogicalOperatorString(operator) {
         throw new Error(`Unsupported logical operator: ${operator}`);
     }
 }
-/*function generateCondition(condition: Condition, fileNode: CompositeGeneratorNode): string {
-    const sensor = condition.sensor.ref;
-    const value = condition.value.value;
-
-    if (!sensor || sensor.inputPin === undefined || value === undefined) {
-        throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
-    }
-
-    const sensorName = sensor.name;
-    const inputPin = sensor.inputPin;
-
-    return `
-                    (millis() - ${sensorName}LastDebounceTime > debounce &&
-                    digitalRead(${inputPin}) == ${value})
-    `;
-}*/
 //# sourceMappingURL=generator.js.map

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { CompositeGeneratorNode, NL, toString } from 'langium';
 import path from 'path';
-import { Action, Actuator, App, Condition,SimpleCondition,MultipleCondition, LogicalOperator, Sensor, State, Transition, isSimpleCondition, isMultipleCondition, isException, Exception} from '../language-server/generated/ast';
+import { Action, Actuator, App, Condition,SimpleCondition,MultipleCondition, LogicalOperator, Sensor, State, Transition, isSimpleCondition, isMultipleCondition, isException, Exception, isTemporalCondition, TemporalCondition} from '../language-server/generated/ast';
 import { extractDestinationAndName } from './cli-util';
 
 export function generateInoFile(app: App, filePath: string, destination: string | undefined): string {
@@ -55,7 +55,7 @@ long `+brick.name+`LastDebounceTime = 0;
     fileNode.append(`
 	}
 	void loop() {
-			switch(currentState){`,NL)
+		switch(currentState){`,NL)
 			for(const state of app.states){
 				compileState(state, fileNode)
             }
@@ -67,165 +67,171 @@ long `+brick.name+`LastDebounceTime = 0;
 
 
 
-    }
+}
 
-	function compileActuator(actuator: Actuator, fileNode: CompositeGeneratorNode) {
-        fileNode.append(`
-		pinMode(`+actuator.outputPin+`, OUTPUT); // `+actuator.name+` [Actuator]`)
-    }
+function compileActuator(actuator: Actuator, fileNode: CompositeGeneratorNode) {
+	fileNode.append(`
+	pinMode(`+actuator.outputPin+`, OUTPUT); // `+actuator.name+` [Actuator]`)
+}
 
-	function compileSensor(sensor:Sensor, fileNode: CompositeGeneratorNode) {
-    	fileNode.append(`
-		pinMode(`+sensor.inputPin+`, INPUT); // `+sensor.name+` [Sensor]`)
+function compileSensor(sensor:Sensor, fileNode: CompositeGeneratorNode) {
+	fileNode.append(`
+	pinMode(`+sensor.inputPin+`, INPUT); // `+sensor.name+` [Sensor]`)
+}
+
+function compileState(state: State, fileNode: CompositeGeneratorNode) {
+	fileNode.append(`
+			case `+state.name+`:`)
+	for(const action of state.actions){
+		compileAction(action, fileNode)
 	}
+	for(const transition of state.transitions){
+		if (transition!== null){
+			compileTransition(transition, fileNode)
+		}
+	}
+	
+	fileNode.append(`
+			\tbreak;`)
+}
 
-    function compileState(state: State, fileNode: CompositeGeneratorNode) {
-        fileNode.append(`
-				case `+state.name+`:`)
-		for(const action of state.actions){
-			compileAction(action, fileNode)
-		}
-		for(const transition of state.transitions){
-			if (transition!== null){
-				compileTransition(transition, fileNode)
-			}
-		}
-		
+
+function compileAction(action: Action, fileNode:CompositeGeneratorNode) {
+	if (isException(action)){
+		compileException(action, fileNode)
+
+	}
+	else{
 		fileNode.append(`
-				\tbreak;`)
-    }
-	
-
-	function compileAction(action: Action, fileNode:CompositeGeneratorNode) {
-		if (isException(action)){
-			compileException(action, fileNode)
-
-		}
-		else{
-			fileNode.append(`
-				\tdigitalWrite(`+action.actuator.ref?.outputPin+`,`+action.value.value+`);`)
-		}
-		
+			\tdigitalWrite(`+action.actuator.ref?.outputPin+`,`+action.value.value+`);`)
 	}
-
-	function compileException(exception: Exception, fileNode:CompositeGeneratorNode) {
-		const actuator = exception.actuator.ref;
-		const pauseTime = exception.pauseTime
-		const errorNumber = exception.errorNumber;
-		if (actuator) {
-			fileNode.append(`
-					// Gestion de l'exception : Actuator ${actuator.name} - Erreur ${errorNumber}
-					for (int i = 0; i < ${errorNumber}; i++) {
-						digitalWrite(${actuator.outputPin}, HIGH);
-						delay(500);
-						digitalWrite(${actuator.outputPin}, LOW);  
-						delay(500);  
-					}
-
-					// Mettre en pause après les clignotements
-					delay(${pauseTime}); 
-			
-			`);
-		} else {
-			throw new Error("Actuator is undefined.");
-		}		
-	}
-
-	function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {
-		if (!transition.condition) {
-			throw new Error("Transition must have one condition.");
-		}
-		const sensorName = isSimpleCondition(transition.condition)
-		? (transition.condition as SimpleCondition).sensor.ref?.name
-		: "compoundCondition";
-
-		
-		fileNode.append(`\n\t\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
-		fileNode.append(`\t\t\t\t\tif ( `);
-		compileCondition(transition.condition, fileNode);
-		fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
-		fileNode.append(`\t\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
-		fileNode.append(`\t\t\t\t\t\tcurrentState = ${transition.next.ref?.name};\n`);
-		fileNode.append(`\t\t\t\t\t}\n`)
-
 	
-	}
+}
 
-	function compileCondition(condition: Condition, fileNode: CompositeGeneratorNode) {
-		if (isSimpleCondition(condition)) {
-			compileSimpleCondition(condition, fileNode);
-		} else if (isMultipleCondition(condition)) {
-			compileMultipleCondition(condition, fileNode);
-		} else {
-			throw new Error("Invalid condition: missing simpleCondition or multipleCondition.");
-		}
-
-	}
-
-	function compileSimpleCondition(condition: SimpleCondition, fileNode: CompositeGeneratorNode) {
-		const sensor = condition.sensor.ref;
-		const value = condition.value.value;
-	
-		if (!sensor || sensor.inputPin === undefined || value === undefined) {
-			throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
-		}
-	
-		//const sensorName = sensor.name;
-		const inputPin = sensor.inputPin;
-	
-		const conditionCode = `digitalRead(${inputPin}) == ${value}`;
-    	fileNode.append(conditionCode);
-
-	}
-
-	function compileMultipleCondition(condition: MultipleCondition, fileNode: CompositeGeneratorNode) {
-		const conditionStrings: string[] = [];
-		for (const cond of condition.conditions) {
-			const conditionNode = new CompositeGeneratorNode();
-			compileCondition(cond, conditionNode);
-			conditionStrings.push(toString(conditionNode));
-		}
-	
-		let combinedConditions = conditionStrings[0];
-	
-		for (let i = 1; i < conditionStrings.length; i++) {
-			const operator = condition.operator; 
-			const operatorString = getLogicalOperatorString(operator);
-			combinedConditions += `${operatorString} ${conditionStrings[i]}`;
-		}
-	
+function compileException(exception: Exception, fileNode:CompositeGeneratorNode) {
+	const actuator = exception.actuator.ref;
+	const pauseTime = exception.pauseTime
+	const errorNumber = exception.errorNumber;
+	if (actuator) {
 		fileNode.append(`
-					(${combinedConditions}) 
+				// Gestion de l'exception : ${actuator.name} - Erreur ${errorNumber}
+				for (int i = 0; i < ${errorNumber}; i++) {
+					digitalWrite(${actuator.outputPin}, HIGH);
+					delay(500);
+					digitalWrite(${actuator.outputPin}, LOW);  
+					delay(500);  
+				}
+
+				// Mettre en pause après les clignotements
+				delay(${pauseTime}); 
+		
 		`);
+	} else {
+		throw new Error("Actuator is undefined.");
+	}		
+}
+
+function compileTransition(transition: Transition, fileNode: CompositeGeneratorNode) {
+	if (!transition.condition) {
+		throw new Error("Transition must have one condition.");
 	}
+	const sensorName = isSimpleCondition(transition.condition)
+	? (transition.condition as SimpleCondition).sensor.ref?.name
+	: "compoundCondition";
+
 	
-	
-	function getLogicalOperatorString(operator: LogicalOperator): string {
-		if (operator.AND) {
-			return '&&'; 
-		} else if (operator.OR) {
-			return '||'; 
-		} else if (operator.XOR) {
-			return '^'; 
-		} else {
-			throw new Error(`Unsupported logical operator: ${operator}`);
-		}
+	fileNode.append(`\n\t\t\t\tconst ${sensorName}BounceGuard = millis() - ${sensorName}LastDebounceTime > debounce;\n`);
+	fileNode.append(`\n\t\t\t\tif ( `);
+	compileCondition(transition.condition, fileNode);
+	fileNode.append(`\t\t\t && ${sensorName}BounceGuard) {\n`);
+	fileNode.append(`\t\t\t\t\t${sensorName}LastDebounceTime = millis();\n`);
+	fileNode.append(`\t\t\t\t\tcurrentState = ${transition.next.ref?.name};\n`);
+	fileNode.append(`\t\t\t\t\t}\n`)
+
+
+}
+
+function compileCondition(condition: Condition, fileNode: CompositeGeneratorNode) {
+	if (isSimpleCondition(condition)) {
+		compileSimpleCondition(condition, fileNode);
+	} else if (isMultipleCondition(condition)) {
+		compileMultipleCondition(condition, fileNode);
+	} else if (isTemporalCondition(condition)) {
+		compileTemporalCondition(condition, fileNode);
+	}	
+	else {
+		throw new Error("Invalid condition: missing simpleCondition or multipleCondition.");
 	}
-	
-	/*function generateCondition(condition: Condition, fileNode: CompositeGeneratorNode): string {
-		const sensor = condition.sensor.ref;
-		const value = condition.value.value;
-	
-		if (!sensor || sensor.inputPin === undefined || value === undefined) {
-			throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
-		}
-	
-		const sensorName = sensor.name;
-		const inputPin = sensor.inputPin;
-	
-		return `
-						(millis() - ${sensorName}LastDebounceTime > debounce &&
-						digitalRead(${inputPin}) == ${value})
-		`;
-	}*/
-	
+
+}
+
+function compileSimpleCondition(condition: SimpleCondition, fileNode: CompositeGeneratorNode) {
+	const sensor = condition.sensor.ref;
+	const value = condition.value.value;
+
+	if (!sensor || sensor.inputPin === undefined || value === undefined) {
+		throw new Error("Invalid condition: missing sensor reference, input pin, or value.");
+	}
+
+	//const sensorName = sensor.name;
+	const inputPin = sensor.inputPin;
+
+	const conditionCode = `digitalRead(${inputPin}) == ${value}`;
+	fileNode.append(conditionCode);
+
+}
+
+function compileMultipleCondition(condition: MultipleCondition, fileNode: CompositeGeneratorNode) {
+	const conditionStrings: string[] = [];
+	for (const cond of condition.conditions) {
+		const conditionNode = new CompositeGeneratorNode();
+		compileCondition(cond, conditionNode);
+		conditionStrings.push(toString(conditionNode));
+	}
+
+	let combinedConditions = conditionStrings[0];
+
+	for (let i = 1; i < conditionStrings.length; i++) {
+		const operator = condition.operator; 
+		const operatorString = getLogicalOperatorString(operator);
+		combinedConditions += ` ${operatorString} ${conditionStrings[i]}`;
+	}
+
+	fileNode.append(`
+				(${combinedConditions}) 
+	`);
+}
+
+function compileTemporalCondition(condition: TemporalCondition, fileNode: CompositeGeneratorNode) {
+	const innerConditionNode = new CompositeGeneratorNode();
+	compileCondition(condition.condition, innerConditionNode);
+
+	const duration = condition.duration;
+	const uniqueTimer = `timer_${Math.random().toString(36).substring(2)}`;
+
+	fileNode.append(`
+		static unsigned long ${uniqueTimer} = 0; // Timer for temporal condition
+		if (${toString(innerConditionNode)}) {
+			if (${uniqueTimer} == 0) {
+				${uniqueTimer} = millis(); // Start timer
+			}
+			if (millis() - ${uniqueTimer} >= ${duration}) {
+				${uniqueTimer} = 0; // Reset timer
+	`);
+
+}
+
+
+function getLogicalOperatorString(operator: LogicalOperator): string {
+	if (operator.AND) {
+		return '&&'; 
+	} else if (operator.OR) {
+		return '||'; 
+	} else if (operator.XOR) {
+		return '^'; 
+	} else {
+		throw new Error(`Unsupported logical operator: ${operator}`);
+	}
+}
+
+
