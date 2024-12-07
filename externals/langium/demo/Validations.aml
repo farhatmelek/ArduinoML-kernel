@@ -1,0 +1,29 @@
+app validations initial state s1 {
+    bricks
+        Sensor button1 : 10
+        Sensor button2 : 10
+        Actuator red_red : 12
+        Actuator led_green : 10
+    states
+        s2 {
+            red_red <= LOW
+            (button1 is HIGH AND button2 is LOW) => s2
+            
+        }
+        s2 {
+            red_red <= LOW
+            (button1 is LOW AND button2 is HIGH) => s3
+        }
+        s3 {
+            red_red <= LOW
+            (button1 is HIGH AND button2 is HIGH) => s2
+        }
+        s4 {
+            red_red <= LOW
+            button1 is LOW AND 0 ms => off
+
+        }
+
+    
+        
+}
