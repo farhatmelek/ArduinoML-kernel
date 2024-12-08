@@ -1,6 +1,6 @@
 use ArduinoML
 
-application "Switch!"
+application "State based alarm"
 
 sensor button: 9
 actuator led: 12
@@ -13,4 +13,5 @@ initial :off
 transition from: :on, to: :off, when: is_high?(:button)
 transition from: :off, to: :on, when: is_high?(:button)
 
-finished!
+finished! :show_me
+

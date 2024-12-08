@@ -25,16 +25,12 @@ defmodule ArduinoML.State do
   end
   def enhanced(nil, _), do: nil
   def enhanced(%{label: label, actions: actions}, application) do
-    IO.inspect(actions, label: "Actions in ~>")
     state_label=label #enhanced(label, application)
     actions_en = Enum.map(actions, fn action ->
       enriched_action = enhanced_action(action, application)
       IO.inspect(enriched_action, label: "Enriched action inside Enum.map ~>")
       enriched_action
     end)
-    IO.inspect(actions_en, label: "Actions in state afeter ~>")
-#    actions_en= Enum.map(actions, fn action -> enhanced_action(action, application) end)
-#    IO.inspect(actions, label: "Actions in state afeter ~>")
     %ArduinoML.State{label: state_label, actions: actions_en}
 
   end
