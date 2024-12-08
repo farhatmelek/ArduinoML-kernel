@@ -1,7 +1,7 @@
 app RedButton initial state off {
 	bricks
 		Actuator red_led : 12
-		Sensor button : 8
+		Sensor button : 10
 	
 	states
 		off {
@@ -13,4 +13,6 @@ app RedButton initial state off {
 			button is HIGH => off
 		}
 }
+
+
 

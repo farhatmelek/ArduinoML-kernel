@@ -1,0 +1,16 @@
+app LedController initial state off {
+    bricks
+        Sensor button1 : 10
+        Actuator LED1 : 12
+    
+    states
+        off {
+            LED1 <= LOW
+            button1 is HIGH => on
+        }
+
+        on {
+            LED1 <= HIGH
+            button1 is LOW AND 800 ms => off
+        }
+}
