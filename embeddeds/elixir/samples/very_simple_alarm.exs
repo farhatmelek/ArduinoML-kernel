@@ -14,4 +14,4 @@ initial :released
 transition from: :released, to: :pushed, when: is_high?(:button)
 transition from: :pushed, to: :released, when: is_low?(:button)
 
-finished!
+finished! :show_me

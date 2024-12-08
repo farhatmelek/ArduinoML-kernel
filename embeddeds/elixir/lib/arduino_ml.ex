@@ -12,14 +12,15 @@ defmodule ArduinoML do
   alias ArduinoML.State, as: State
   alias ArduinoML.Transition, as: Transition
   alias ArduinoML.CodeProducer, as: CodeProducer
+  alias ArduinoML.MultipleCondition, as: MultipleCondition
 
-  import Kernel, except: [and: 2, <: 2, >: 2]
+  import Kernel, except: [and: 2, <: 2, >: 2,or: 2]
 
   defmacro __using__(_opts) do
     quote do
       import ArduinoML
 
-      import Kernel, except: [and: 2, <: 2, >: 2]
+      import Kernel, except: [and: 2, <: 2, >: 2, or: 2]
     end
   end
 
@@ -61,7 +62,18 @@ defmodule ArduinoML do
 
     :ok
   end
+  @doc """
+  Adds a state to the state machine inside the application.
+  This version adds a state with multiple "on entry" actions.
+  """
+  def error_state(label,on_entry: action= %ArduinoML.Action{}, number_of_repeat: number_of_repeat,every: every) do
+    exception_transformed=%ArduinoML.Exception{pause_time: every, error_number: number_of_repeat,actuator: action.actuator,signal: action.signal}
+    state = %State{label: label, actions: [exception_transformed]}
 
+    Agent.update(__MODULE__, fn app -> Application.with_state(app, state) end)
+
+    :ok
+  end
   @doc """
   Adds a state to the state machien inside the application.
   This version adds a state without "on entry" action.
@@ -69,7 +81,7 @@ defmodule ArduinoML do
   def state(label) do
     state(label, on_entry: [])
   end
-  
+
   @doc """
   Adds a state to the state machine inside the application.
   This version adds a state with only one "on entry" action.
@@ -137,19 +149,61 @@ defmodule ArduinoML do
   end
   
   @doc """
-  Builds an array of assertions from two assertions.
+  Builds an array of assertions from two assertions with and.
   """
   def (assertion = %Assertion{}) and (another_one = %Assertion{}) do
-    [assertion, another_one]
+    %MultipleCondition{operator: :and, conditions: [assertion, another_one]}
   end
 
   @doc """
-  Add an assertion to an existing array.
+  Add an assertion to an existing array for and condition.
   """
-  def assertions and (assertion = %Assertion{}) when is_list(assertions) do
-    assertions ++ [assertion]
+  def conditions and (assertion = %Assertion{}) when is_list(conditions) do
+    %MultipleCondition{operator: :and,conditions: conditions ++ [assertion]}
   end
-    
+  @doc """
+  Builds an array of assertions from two assertions with or.
+  """
+  def (assertion = %Assertion{}) or (another_one = %Assertion{}) do
+    %MultipleCondition{operator: :or, conditions: [assertion, another_one]}
+  end
+
+  @doc """
+  Add an assertion to an existing array for or condition.
+  """
+  def conditions or (assertion = %Assertion{}) when is_list(conditions) do
+    %MultipleCondition{operator: :or,conditions: conditions ++ [assertion]}
+  end
+
+  defp handle_multiple_condition(%MultipleCondition{operator: op, conditions: conditions}) do
+    %{operator: op, conditions: conditions}
+  end
+
+  @doc """
+  Adds a transition to the state machine inside the application.
+  This version adds a transition which is the combination of 2 or severals .
+  """
+  def transition(from: from, to: to, when: condition = %MultipleCondition{}) do
+    transformed_condition=handle_multiple_condition(condition)
+    transition=%Transition{from: from, to: to, on: transformed_condition}
+    Agent.update(__MODULE__, fn app -> Application.with_transition(app, transition) end)
+
+    :ok
+  end
+
+  @doc """
+  Adds a transition to the state machine inside the application.
+  This version adds a transition which is triggered when only one condition is validated.
+  """
+  def transition(from: from, to: to, when: condition = %Assertion{}) do
+    transition = %Transition{from: from, to: to, on: condition}
+
+    Agent.update(__MODULE__, fn app -> Application.with_transition(app, transition) end)
+
+    :ok
+  end
+
+
   @doc """
   Builds an assertion "is the sensor at HIGH signal?".
   """
@@ -160,26 +214,8 @@ defmodule ArduinoML do
   """
   def is_low?(label), do: label <~> :low
 
-  @doc """
-  Adds a transition to the state machine inside the application.
-  This version adds a transition which is triggered when only one condition is validated.
-  """
-  def transition(from: from, to: to, when: condition = %Assertion{}) do
-    transition(from: from, to: to, when: [condition])
-  end
 
-  @doc """
-  Adds a transition to the state machine inside the application.
-  This version adds a transition which is triggered when multiple conditions are validated.
-  """
-  def transition(from: from, to: to, when: conditions) when is_list(conditions) do
-    transition = %Transition{from: from, to: to, on: conditions}
 
-    Agent.update(__MODULE__, fn app -> Application.with_transition(app, transition) end)
-
-    :ok
-  end
-  
   @doc """
   Validates the described application. Will raise errors if it is not valid.
   """
@@ -192,6 +228,7 @@ defmodule ArduinoML do
   Translates the described application into C Arduino code.
   """
   def to_code! do
+
     validate!()
 
     application!()

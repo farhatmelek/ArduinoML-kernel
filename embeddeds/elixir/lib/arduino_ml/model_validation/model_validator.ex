@@ -8,7 +8,6 @@ defmodule ArduinoML.ModelValidator do
   """
   def validate(application = %Application{}) do
     bricks = application.sensors ++ application.actuators
-    
     # Check that all used pins have been associated once and have correct value.
     bricks |> Enum.map(&(&1.pin)) |> validate_used_pins
 
@@ -17,7 +16,6 @@ defmodule ArduinoML.ModelValidator do
 
     # Check the validity of the states and transitions.
     application |> Application.enhanced |> validate_state_machine
-    
     # If it survived, then return OK!
     :ok
   end
@@ -78,12 +76,38 @@ defmodule ArduinoML.ModelValidator do
 
   defp validate_transition(%{from: nil}), do: raise "A transition has an unknown incoming state."
   defp validate_transition(%{to: nil}), do: raise "A transition has an unknown arrival state."
-  defp validate_transition(%{on: assertions}) do
-    Enum.each(assertions, fn assertion -> validate_assertion(assertion) end)
+  defp validate_transition(%{on: assertion}) do
+   validate_transition(assertion)
+  end
+  defp validate_transition(%ArduinoML.Assertion{} = assertion) do
+    validate_assertion(assertion)
+  end
+  defp validate_transition(%ArduinoML.MultipleCondition{operator: operator, conditions: conditions}) do
+    unless operator in [:and, :or] do
+      raise "The operator of a multiple condition must be either :and or :or."
+    end
+    Enum.each(conditions, fn condition -> validate_transition(condition) end)
   end
   
   defp validate_action(%{actuator: nil}), do: raise "An action is bound to an unknown actuator."
   defp validate_action(%{signal: nil}), do: raise "An action has an invalid signal."
+  defp validate_action(%ArduinoML.Exception{actuator: actuator, signal: signal,pause_time: pause_time, error_number: error_number}) do
+    if signal_checker(actuator.type).(signal) do
+      :ok
+    else
+      raise "An action has a #{Atom.to_string(actuator.type)} actuator and a not-#{Atom.to_string(actuator.type)} signal."
+    end
+    if pause_time in 1000..10000 do
+      :ok
+    else
+      raise "The pause time must be included between 0 and 10000 (found: #{Integer.to_string(pause_time)})."
+    end
+    if error_number in 0..10 do
+      :ok
+    else
+      raise "The error number is too high, it must be included between 0 and 10 (found: #{Integer.to_string(error_number)})."
+    end
+  end
   defp validate_action(%{actuator: %{type: type}, signal: signal}) do
     if signal_checker(type).(signal) do
       :ok

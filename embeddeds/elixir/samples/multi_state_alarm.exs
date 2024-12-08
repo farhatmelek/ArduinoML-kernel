@@ -14,4 +14,5 @@ transition from: :ready, to: :noise, when: is_high?(:button)
 transition from: :noise, to: :light, when: is_high?(:button)
 transition from: :light, to: :ready, when: is_high?(:button)
 
-finished!
+finished! :show_me
+
