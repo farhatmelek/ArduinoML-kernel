@@ -1,6 +1,6 @@
 
 //Wiring code generated from an ArduinoML model
-// Application name: RedButton
+// Application name: SimpleAlarm
 
 long debounce = 200;
 enum STATE {off, on};
@@ -12,11 +12,9 @@ long buttonLastDebounceTime = 0;
 
             
 
-bool compoundConditionBounceGuard = false; 
-long compoundConditionLastDebounceTime = 0;
-	
 	void setup(){
 	pinMode(12, OUTPUT); // red_led [Actuator]
+	pinMode(11, OUTPUT); // buzzer [Actuator]
 	pinMode(10, INPUT); // button [Sensor]
 	}
 	void loop() {
@@ -24,6 +22,7 @@ long compoundConditionLastDebounceTime = 0;
 
 			case off:
 				digitalWrite(12,LOW);
+				digitalWrite(11,LOW);
 				buttonBounceGuard = millis() - buttonLastDebounceTime > debounce;
 
 				if ( digitalRead(10) == HIGH			 && buttonBounceGuard) {
@@ -34,9 +33,10 @@ long compoundConditionLastDebounceTime = 0;
 				break;
 			case on:
 				digitalWrite(12,HIGH);
+				digitalWrite(11,HIGH);
 				buttonBounceGuard = millis() - buttonLastDebounceTime > debounce;
 
-				if ( digitalRead(10) == HIGH			 && buttonBounceGuard) {
+				if ( digitalRead(10) == LOW			 && buttonBounceGuard) {
 					buttonLastDebounceTime = millis();
 					currentState = off;
 					}

@@ -27,19 +27,35 @@ State :
     name=ID '{'
     actions+=Action
     (actions+=Action)* 
-    transition=Transition
+    (transitions+=Transition)*
     '}';
 
 Action :
-    actuator=[Actuator:ID] '<=' value=Signal;
+    actuator=[Actuator:ID] '<=' value=Signal
+    | Exception;
+
+Exception:
+    'exception' '{'
+        actuator=[Actuator:ID]
+        'pauseTime' pauseTime=INT
+        'errorNumber' errorNumber=INT
+    '}';
 
 Transition :
-    conditions+=Condition
-    (operator+=LogicalOperator conditions+=Condition)* 
-    '=>' next=[State:ID];
+    condition=Condition '=>' next=[State:ID];
 
-Condition :
+Condition:
+    SimpleCondition | MultipleCondition | TemporalCondition;
+
+SimpleCondition:
     sensor=[Sensor:ID] 'is' value=Signal;
+
+MultipleCondition:
+    '(' conditions+=Condition
+    (operator+=LogicalOperator conditions+=Condition)+ ')';
+
+TemporalCondition:
+    condition = (SimpleCondition | MultipleCondition) 'AND' duration=INT 'ms';
 
 Signal:
     value=(HIGH | LOW);
