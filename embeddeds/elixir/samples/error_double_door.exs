@@ -1,6 +1,6 @@
 use ArduinoML
 
-application "Dual-check alarm"
+application "Error double door"
 
 sensor button1: 10
 sensor button2: 11
@@ -15,4 +15,5 @@ transition from: :closed, to: :opened, when: is_low?(:button1) and is_high?(:but
 transition from: :closed, to: :error_state, when: is_high?(:button1) and is_high?(:button2)
 
 finished! :show_me
+
 

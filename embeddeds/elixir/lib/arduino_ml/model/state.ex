@@ -28,7 +28,6 @@ defmodule ArduinoML.State do
     state_label=label #enhanced(label, application)
     actions_en = Enum.map(actions, fn action ->
       enriched_action = enhanced_action(action, application)
-      IO.inspect(enriched_action, label: "Enriched action inside Enum.map ~>")
       enriched_action
     end)
     %ArduinoML.State{label: state_label, actions: actions_en}

@@ -51,7 +51,7 @@ defmodule ArduinoML.CodeProducer do
     }
     """
   end
-  defp action_statement(%ArduinoML.Exception{pause_time: pause_time, error_number: error_number,actuator: %{label: label, type: type},signal: signal}) do
+  defp action_statement(%ArduinoML.Exception{pause_time: pause_time, error_number: error_number,actuator: %{label: label, type: type},signal: _}) do
     blinking_actions=Enum.map(1..error_number, fn _   ->
       """
       #{write_function(type)}(#{brick(label)}, #{signal(:high)});
@@ -83,7 +83,7 @@ defmodule ArduinoML.CodeProducer do
     "    #{state_change(application, to)}\n" <>
     "  }" <> transitions_declaration(application, others, false)
   end
-  defp transform_condition(%{sensor: sensor_label, signal: signal_label, comparison: comparison}=assertion) do
+  defp transform_condition(%{sensor: _, signal: _, comparison: _}=assertion) do
      condition(assertion)
 
   end

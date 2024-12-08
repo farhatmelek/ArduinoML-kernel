@@ -90,10 +90,7 @@ defmodule ArduinoML do
     state(label, on_entry: [action])
   end
 
-  @doc """
-  Adds a state to the state machine inside the application.
-  This version adds a state with multiple "on entry" actions.
-  """
+
   def state(label, on_entry: actions) when is_list(actions) do
     state = %State{label: label, actions: actions}
 
@@ -155,15 +152,11 @@ defmodule ArduinoML do
     %MultipleCondition{operator: :and, conditions: [assertion, another_one]}
   end
 
-  @doc """
-  Add an assertion to an existing array for and condition.
-  """
+
   def conditions and (assertion = %Assertion{}) when is_list(conditions) do
     %MultipleCondition{operator: :and,conditions: conditions ++ [assertion]}
   end
-  @doc """
-  Builds an array of assertions from two assertions with or.
-  """
+
   def (assertion = %Assertion{}) or (another_one = %Assertion{}) do
     %MultipleCondition{operator: :or, conditions: [assertion, another_one]}
   end
@@ -191,10 +184,7 @@ defmodule ArduinoML do
     :ok
   end
 
-  @doc """
-  Adds a transition to the state machine inside the application.
-  This version adds a transition which is triggered when only one condition is validated.
-  """
+
   def transition(from: from, to: to, when: condition = %Assertion{}) do
     transition = %Transition{from: from, to: to, on: condition}
 
