@@ -1,0 +1,25 @@
+
+application foo {
+    
+    sensor button : 8;
+    actuator buzzer : 11;
+    actuator red_led : 12;
+
+    -> buzzer_off {
+        buzzer <= LOW;
+        red_led <= LOW;
+        button is HIGH => buzzer_on ;
+    }
+
+    buzzer_on {
+        buzzer <= HIGH;
+        red_led <= LOW;
+        button is HIGH => led_on;
+    }
+
+    led_on {
+        buzzer <= LOW;
+        red_led <= HIGH;
+        button is HIGH => buzzer_off;
+    }
+}

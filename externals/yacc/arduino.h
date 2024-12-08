@@ -30,8 +30,36 @@ Brick *add_brick(Brick *b, Brick *list);
 //
 typedef struct arduino_transition Transition;
 
+
+typedef struct arduino_condition {
+    int lineno;
+    char *var_name;
+    int signal_value;
+    int sig_value;
+    struct arduino_condition *condition1;
+    struct arduino_condition *condition2;
+    char *operator;
+} Condition;
+
+
+
+typedef struct arduino_temp_condition {
+    int lineno;
+    char *var_name;
+    int signal_value;
+    int sig_value;
+    struct arduino_condition *condition1;
+    int duration;
+} Temp_Condition;
+
 /// Make a new transition (when `var` is `signal` goto `newstate`
-Transition *make_transition(char *var, int signal, char *newstate);
+Transition *make_transition(Condition *condition, char *newstate);
+
+Transition *make_transition_simple(char *var, int signal, char *newstate);
+
+Transition *add_transition(Transition *list, Transition *t);
+
+Transition *make_temp_transition(Temp_Condition *temp_Condition , char *newstate);
 
 
 //
@@ -56,6 +84,18 @@ State *make_state(char *var, Action *actions, Transition *transition, int initia
 // Add a state to a list of states
 State *add_state(State *list, State *a);
 
+
+//
+// ========== CONDITIONS ==========
+//
+
+// Make a new condition that combines two conditions using the given operator
+Condition *make_condition(Condition *condition1, char *operator, Condition *condition2);
+
+// Make a new condition based on a single variable and signal value
+Condition *make_simple_condition(char *var_name, int signal_value);
+
+Temp_Condition *make_temp_condition(Condition *condition ,int duration);
 
 //
 // ========== CODE PRODUCTION ==========

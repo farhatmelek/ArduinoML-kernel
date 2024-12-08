@@ -11,6 +11,9 @@
 "sensor"                return KSENSOR;
 "actuator"              return KACTUATOR;
 "is"                    return KIS;
+"and"                   return KAND;
+"or"                    return KOR;
+"xor"                   return KXOR;
 "HIGH"                  return KHIGH;
 "LOW"                   return KLOW;
 "=>"                    return RIGHT;
@@ -20,8 +23,8 @@
 
   /* ==== port numbers (as strings) and identifiers */
 [1-9]|(1[012])          { yylval.value = atoi(yytext); return PORT_NUMBER; }
-[a-zA-Z][a-zA-Z0-9_]+   { yylval.name  = strdup(yytext); return IDENT; }
-
+[a-zA-Z][a-zA-Z0-9_]+   { yylval.name = strdup(yytext); return IDENT; }
+[0-9]+                  { yylval.time = atoi(yytext); return SECONDS; }
   /* ==== Spaces and comments ==== */
 [ \t\n]                 { }
 "//".*                  { }

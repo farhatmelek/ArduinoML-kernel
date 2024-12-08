@@ -1,0 +1,18 @@
+
+application foo {
+    
+    sensor button1 : 8;
+    sensor button2 : 12;
+    actuator buzzer : 11;
+
+    -> off {
+        buzzer <= LOW;
+        button1 is HIGH and button2 is HIGH => alarm;
+    }
+
+    alarm {
+        buzzer <= HIGH;
+        button1 is LOW or button2 is LOW => off;
+    }
+}
+
